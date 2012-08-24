@@ -40,7 +40,7 @@ class blox {
         }
     }
 
-    function checkfilter() {
+/*    function checkfilter() {
         if ($this->bloxconfig['resourceclass'] == 'modDocument') {
             if ($this->bloxconfig['showdeleted'] == '0' || $this->bloxconfig['showdeleted'] == '0') {
                 $filter = 'deleted|' . $this->bloxconfig['showdeleted'] . '|=';
@@ -53,9 +53,9 @@ class blox {
                 $this->bloxconfig['prefilter'] = !empty($this->bloxconfig['prefilter']) ? $filter . '++' . $this->bloxconfig['prefilter'] : $filter;
             }
         }
-    }
+    } */
 
-    function checkparents() {
+/*    function checkparents() {
         global $modx;
 
         if (!empty($this->bloxconfig['IDs']) || $this->bloxconfig['resourceclass'] !== 'modDocument') {
@@ -78,16 +78,16 @@ class blox {
         //$filter = 'id|'.implode(',', $ids).'|IN';
         $filter = 'parent|' . implode(',', $parents) . '|IN';
         $this->bloxconfig['prefilter'] = !empty($this->bloxconfig['prefilter']) ? $filter . '++' . $this->bloxconfig['prefilter'] : $filter;
-    }
+    } */
 
-    function checkIDs() {
+/*    function checkIDs() {
         if (!empty($this->bloxconfig['IDs'])) {
             $ids = $this->bloxconfig['IDs'];
             $filter = $this->bloxconfig['keyField'] . '|' . $ids . '|IN';
             $this->bloxconfig['prefilter'] = !empty($this->bloxconfig['prefilter']) ? $filter . '++' . $this->bloxconfig['prefilter'] : $filter;
         }
 
-    }
+    } */
 
 
     function prepareQuery($scriptProperties = array(), &$total = 0, $forcounting = false) {
@@ -137,12 +137,10 @@ class blox {
             if ($debug) {
                 $c->prepare();
                 echo '<pre>Precount Query String:<br/>' . $c->toSql() . '</pre>';
-                //echo $c->toSql();
             }
             if ($c->prepare() && $c->stmt->execute()) {
                 $rows = $c->stmt->fetchAll(PDO::FETCH_COLUMN);
-                $total = (integer)reset($rows);
-
+                $total = intval(reset($rows));
             }
             return $c;
         }
@@ -206,7 +204,7 @@ class blox {
         }
     }
 
-    function getTvNames($template = 'all') {
+/*    function getTvNames($template = 'all') {
         global $modx;
         $t_tv = $modx->getFullTableName('site_tmplvars');
         if ($template !== 'all') {
@@ -228,7 +226,7 @@ class blox {
         $this->tvnames = $tvnames;
         $this->tvids = $tvids;
         return;
-    }
+    } */
 
 
     //////////////////////////////////////////////////
@@ -412,7 +410,7 @@ class blox {
     //////////////////////////////////////////////////////
     function getdatas($date, $file) {
         global $modx;
-        $scriptProperties = $this->bloxconfig['scriptProperties'];
+//        $scriptProperties = $this->bloxconfig['scriptProperties']; // unused?
         $file = $modx->getOption('core_path') . $file;
         if ($date == 'dayisempty') {
             $bloxdatas = array();
@@ -422,8 +420,7 @@ class blox {
                 include ($file);
             } else {
                 if ($this->bloxconfig['debug']) {
-
-                    echo "includes-File " . $file . " nicht gefunden3";
+                    echo "<pre>File " . $file . " not found</pre>";
                 }
             }
         }
@@ -436,7 +433,7 @@ class blox {
     //////////////////////////////////////////////////////////////////////////
     //Member Check
     //////////////////////////////////////////////////////////////////////////
-    function isMemberOf($groups) {
+/*    function isMemberOf($groups) {
         global $modx;
         if ($groups == 'all') {
             return true;
@@ -448,13 +445,13 @@ class blox {
                 return false;
             }
         }
-    }
+    } */
 
     /////////////////////////////////////////////////////////////////////////////
     //function to check for permission
     /////////////////////////////////////////////////////////////////////////////
 
-    function checkpermission($permission) {
+/*    function checkpermission($permission) {
         $groupnames = $this->getwebusergroupnames();
         $perms = '';
         foreach ($groupnames as $groupname) {
@@ -462,13 +459,13 @@ class blox {
         }
         $perms = explode(',', $perms);
         return in_array($permission, $perms);
-    }
+    } */
 
     /////////////////////////////////////////////////////////////////////////////
     //function to get the groupnames of the webuser
     /////////////////////////////////////////////////////////////////////////////
 
-    function getwebusergroupnames() {
+/*    function getwebusergroupnames() {
         global $modx;
         $userid = $modx->getLoginUserID();
         $rows = array();
@@ -490,10 +487,10 @@ class blox {
 
         }
         return $names;
-    }
+    } */
 
 
-    function getrows() {
+/*    function getrows() {
         $result = array();
         switch ($this->bloxconfig['resourceclass']) {
             case 'modDocument':
@@ -511,7 +508,7 @@ class blox {
         $result = $this->checkDocSort($result);
 
         return $result;
-    }
+    } */
 
     /**
      * Sort DB result
@@ -545,7 +542,7 @@ class blox {
      * @return array $data - Sorted data
      */
 
-    function sortDbResult($_data) {
+/*    function sortDbResult($_data) {
 
 
         $_argList = func_get_args();
@@ -600,7 +597,7 @@ class blox {
         $_params[] = &$_data;
         call_user_func_array('array_multisort', $_params);
         return $_data;
-    }
+    } */
 
     /*
     * $link['page'] = 3;
@@ -609,7 +606,7 @@ class blox {
     * echo smartModxUrl($modx->documentObject["id"],NULL, $link);
     */
 
-    function smartModxUrl($docid, $docalias, $array_values, $removearray = array()) {
+/*    function smartModxUrl($docid, $docalias, $array_values, $removearray = array()) {
         global $modx;
         $array_url = $_GET;
         $urlstring = array();
@@ -626,7 +623,7 @@ class blox {
         }
 
         return $modx->makeUrl($docid, $docalias, join('&', $urlstring));
-    }
+    } */
 
     // ---------------------------------------------------
     // Function: getChildIDs
@@ -634,7 +631,7 @@ class blox {
     // Similar to the modx version by the same name but much faster
     // ---------------------------------------------------
 
-    function getChildParents($IDs, $depth) {
+/*    function getChildParents($IDs, $depth) {
         global $modx;
         $depth = intval($depth);
         $kids = array();
@@ -687,7 +684,7 @@ class blox {
         }
 
         return $parents;
-    }
+    } */
 
 
     //////////////////////////////////////////////////////////////////////
@@ -727,7 +724,7 @@ class blox {
     // Similar to the modx version by the same name but much faster
     // ---------------------------------------------------
 
-    function getChildIDs($IDs, $depth) {
+/*    function getChildIDs($IDs, $depth) {
         global $modx;
         $depth = intval($depth);
         $kids = array();
@@ -774,13 +771,13 @@ class blox {
         }
 
         return array_unique($docIDs);
-    }
+    } */
 
-    function getSiteMap($items, $level = 0) {
-        /* $start = array (array ('id'=>0));
-        * $map = getSiteMap($start);
-        * print_r($map);
-        */
+/*    function getSiteMap($items, $level = 0) {
+        // $start = array (array ('id'=>0));
+        // $map = getSiteMap($start);
+        // print_r($map);
+        
 
         global $modx;
         $pages = array();
@@ -799,7 +796,7 @@ class blox {
         }
 
         return $pages;
-    }
+    } */
 
 }
 
