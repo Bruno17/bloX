@@ -91,11 +91,11 @@ $timestampmonth = xetadodb_strftime('%m', $timestamp);
 $timestampyear = xetadodb_strftime('%Y', $timestamp);
 $bloxconfig['nowtimestamp'] = $timestamp;
 $bloxconfig['day'] = $modx->getOption('day', $scriptProperties, $timestampday);
-$bloxconfig['day'] = (isset($_REQUEST['day']) && (trim($_REQUEST['day'] !== ''))) ? (string )intval($_REQUEST['day']) : $bloxconfig['day'];
+$bloxconfig['day'] = (isset($_REQUEST['day']) && (trim($_REQUEST['day'] !== ''))) ? (string) intval($_REQUEST['day']) : $bloxconfig['day'];
 $bloxconfig['month'] = $modx->getOption('month', $scriptProperties, $timestampmonth);
-$bloxconfig['month'] = (isset($_REQUEST['month']) && (trim($_REQUEST['month'] !== ''))) ? (string )intval($_REQUEST['month']) : $bloxconfig['month'];
+$bloxconfig['month'] = (isset($_REQUEST['month']) && (trim($_REQUEST['month'] !== ''))) ? (string) intval($_REQUEST['month']) : $bloxconfig['month'];
 $bloxconfig['year'] = $modx->getOption('year', $scriptProperties, $timestampyear);
-$bloxconfig['year'] = (isset($_REQUEST['year']) && (trim($_REQUEST['year'] !== ''))) ? (string )intval($_REQUEST['year']) : $bloxconfig['year'];
+$bloxconfig['year'] = (isset($_REQUEST['year']) && (trim($_REQUEST['year'] !== ''))) ? (string) intval($_REQUEST['year']) : $bloxconfig['year'];
 
 $bloxconfig['userID'] = $modx->getLoginUserID();
 
@@ -128,6 +128,8 @@ $bloxconfig['showunpublished'] = $modx->getOption('showunpublished', $scriptProp
 
 $bloxconfig['debug'] = intval($modx->getOption('debug', $scriptProperties, '0'));
 $bloxconfig['debugTime'] = intval($modx->getOption('debugTime', $scriptProperties, '0'));
+
+$bloxconfig['toPlaceholder'] = $modx->getOption('toPlaceholder', $scriptProperties, '');
 
 if ($bloxconfig['debug']) {
     echo '<pre>' . print_r($bloxconfig, true) . '</pre>';
