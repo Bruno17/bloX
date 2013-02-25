@@ -511,13 +511,15 @@ class bloxhelpers {
         $total = $modx->getCount('modResource', $criteria);
         $modx->setPlaceholder($totalVar, $total);
 
-        $includeContent = in_array('content', $fields) ? 1 : 0;
+        $includeContent = in_array('content', $fields) ? 1 : $includeContent;
+        
         $fields = !empty($fields) ? $fields : array_keys($modx->getFields('modResource'));
         if (empty($includeContent)) {
             $fields = array_diff($fields, array('content'));
         }
         $columns = $modx->getSelectColumns('modResource', 'modResource', '', $fields);
         $criteria->select($columns);
+        
         if (!empty($sortbyTV)) {
             $criteria->leftJoin('modTemplateVar', 'tvDefault', array("tvDefault.name" => $sortbyTV));
             $criteria->leftJoin('modTemplateVarResource', 'tvSort', array("tvSort.contentid = modResource.id", "tvSort.tmplvarid = tvDefault.id"));
