@@ -33,6 +33,7 @@ class blox {
         $this->bloxID = $bloxconfig['id'];
         $this->bloxconfig = $bloxconfig;
         $this->bloxconfig['prefilter'] = '';
+        $this->bloxdebug = array();
         $this->columnNames = array();
         $this->tvnames = array();
         $this->docColumnNames = array();
@@ -105,15 +106,15 @@ class blox {
                 $c->where($query['query'], $keys[$query['operator']]);
             }
         }
-        
-        if (!empty($groupby)){
+
+        if (!empty($groupby)) {
             $c->groupby($groupby);
-        }         
-        
+        }
+
         if ($forcounting) {
             if ($debug) {
                 $c->prepare();
-                echo '<pre>Precount Query String:<br/>' . $c->toSql() . '</pre>';
+                $this->bloxdebug['config'][] = 'Precount Query String:' . "\r\n" . $c->toSql();
             }
             if ($c->prepare() && $c->stmt->execute()) {
                 $rows = $c->stmt->fetchAll(PDO::FETCH_COLUMN);
@@ -138,8 +139,7 @@ class blox {
 
         if ($debug) {
             $c->prepare();
-
-            echo '<pre>Query String:<br/>' . $c->toSql() . '</pre>';
+            $this->bloxdebug['config'][] = 'Query String:' . "\r\n" . $c->toSql();
         }
 
         return $c;
@@ -161,14 +161,14 @@ class blox {
                         $selectfields = $modx->getOption('selectfields', $join, '');
 
                         /*
-                        if ($joinFkMeta = $modx->getFKDefinition($joinclass, 'Resource')){
-                        $localkey = $joinFkMeta['local'];
-                        }
-                        */
+                          if ($joinFkMeta = $modx->getFKDefinition($joinclass, 'Resource')){
+                          $localkey = $joinFkMeta['local'];
+                          }
+                         */
                         $c->leftjoin($joinclass, $jalias, $on);
                         $selectfields = !empty($selectfields) ? explode(',', $selectfields) : null;
                         if ($forcounting) {
-
+                            
                         } else {
                             $c->select($modx->getSelectColumns($joinclass, $jalias, $jalias . '_', $selectfields));
                         }
@@ -178,18 +178,18 @@ class blox {
         }
     }
 
-
     //////////////////////////////////////////////////
     //Display bloX
     /////////////////////////////////////////////////
 
     function displayblox() {
         $datas = $this->getdatas($this->date, $this->bloxconfig['includesfile']);
-        if (isset($datas['bloxoutput'])){
+        if (isset($datas['bloxoutput'])) {
             //direkt output
-            return $datas['bloxoutput'];
+            $output = $datas['bloxoutput'];
         }
-        return $this->displaydatas($datas);
+        $output = $this->displaydatas($datas);
+        return $output;
     }
 
     //////////////////////////////////////////////////
@@ -220,7 +220,6 @@ class blox {
         if (count($innerrows) > 0) {
             foreach ($innerrows as $key => $row) {
                 $startsub = microtime(true);
-
                 $daten = '';
                 $innertpl = '';
                 if (isset($this->tpls[$key])) {
@@ -231,7 +230,6 @@ class blox {
                         $innertpl = "@FILE " . $tplfile;
                     }
                 }
-
                 if ($innertpl !== '') {
                     $data = $this->renderdatarows($row, $innertpl, $key, $outerdata);
                     $bloxinnerrows[$key] = $data;
@@ -239,8 +237,7 @@ class blox {
                 }
                 $endsub = microtime(true);
                 if ($this->bloxconfig['debug'] || $this->bloxconfig['debugTime']) {
-
-                    echo '<pre>Time to render (' . $key . '): ' . ($endsub - $startsub) . ' seconds</pre>';
+                    $this->bloxdebug['time'][] = 'Time to render (' . $key . '): ' . ($endsub - $startsub) . ' seconds';
                 }
             }
         }
@@ -251,9 +248,9 @@ class blox {
         $bloxouterTplData['config'] = $this->bloxconfig;
         $outerdata['blox'] = $bloxouterTplData;
 
-        $tpl = new bloxChunkie($this->tpls['bloxouter']);
+        $tpl = new bloxChunkie($this->tpls['bloxouter'], array('parseLazy' => $this->bloxconfig['parseLazy']));
         $tpl->placeholders = $outerdata;
-        $daten = $tpl->Render();
+        $daten = $tpl->Render($this->bloxconfig['parseLazy']);
         unset($tpl);
         if ($cache == '1') {
             $this->cache->writeCache($cachename, $daten);
@@ -261,8 +258,7 @@ class blox {
 
         $end = microtime(true);
         if ($this->bloxconfig['debug'] || $this->bloxconfig['debugTime']) {
-
-            echo '<pre>Time to render all: ' . ($end - $start) . ' seconds</pre>';
+            $this->bloxdebug['time'][] = 'Time to render all: ' . ($end - $start) . ' seconds';
         }
         return $daten;
     }
@@ -357,7 +353,7 @@ class blox {
         $row['_first'] = $iteration == 1 ? true : '';
         $row['_last'] = $iteration == $rowscount ? true : '';
         $row['blox'] = $datarowTplData;
-        $tpl = new bloxChunkie($rowTpl);
+        $tpl = new bloxChunkie($rowTpl, array('parseLazy' => $this->bloxconfig['parseLazy']));
         $tpl->placeholders = $row;
         $output = $tpl->Render();
 
@@ -387,7 +383,7 @@ class blox {
 
                 $gd = new $class($this);
                 $bloxdatas = $gd->getdatas();
-            } 
+            }
         }
 
         return $bloxdatas;

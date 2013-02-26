@@ -5,19 +5,19 @@
  * Version: 1.0
  * Author: Armand "bS" Pondman (apondman@zerobarrier.nl)
  * Date: Oct 8, 2006 00:00 CET
- * Modified for Revolution & bloX by Thomas Jakobi (thomas.jakobi@partout.info)
+ * Modified for Revolution by Thomas Jakobi (thomas.jakobi@partout.info)
  */
 
 class bloxChunkie {
 
 	var $template;
-	var $templates;
 	var $placeholders;
+	var $options;
 	private $depth;
 	private $maxdepth;
 
-	function bloxChunkie($template = '', $templates = array()) {
-		$this->templates = & $templates;
+	function bloxChunkie($template = '', $options = array()) {
+		$this->options = $options;
 		$this->template = $this->getTemplate($template);
 		$this->depth = 0;
 		$this->maxdepth = 6;
@@ -44,7 +44,7 @@ class bloxChunkie {
 		$this->placeholders[$name] = $value;
 	}
 
-	function Render() {
+	function Render($parseLazy = FALSE) {
 		global $modx;
 
 		$template = $this->template;
@@ -52,6 +52,10 @@ class bloxChunkie {
 		$chunk->setCacheable(false);
 		$template = $chunk->process($this->placeholders, $template);
 		unset($chunk);
+		if ($parseLazy) {
+			$template = str_replace(array('##!'), array('[[!'), $template);
+		}
+
 		return $template;
 	}
 
@@ -59,46 +63,46 @@ class bloxChunkie {
 		global $modx;
 
 		$template = '';
-		if (isset($this->templates[$tpl])) {
-			$template = $this->templates[$tpl];
-		} else {
-			if (substr($tpl, 0, 6) == '@FILE ') {
-				$filename = substr($tpl, 6);
-				if (!isset($modx->chunkieCache['@FILE'])) {
-					$modx->chunkieCache['@FILE'] = array();
-				}
-				if (!array_key_exists($filename, $modx->chunkieCache['@FILE'])) {
-					if (file_exists($modx->getOption('core_path') . $filename)) {
-						$template = file_get_contents($modx->getOption('core_path') . $filename);
-					}
-					$modx->chunkieCache['@FILE'][$filename] = $template;
-				} else {
-					$template = $modx->chunkieCache['@FILE'][$filename];
-				}
-			} elseif (substr($tpl, 0, 8) == '@INLINE ') {
-				$template = substr($tpl, 8);
-			} else {
-				if (substr($tpl, 0, 7) == '@CHUNK ') {
-					$chunkname = substr($tpl, 7);
-				} else {
-					$chunkname = $tpl;
-				}
-				if (!isset($modx->chunkieCache['@CHUNK'])) {
-					$modx->chunkieCache['@CHUNK'] = array();
-				}
-				if (!array_key_exists($chunkname, $modx->chunkieCache['@CHUNK'])) {
-					$chunk = $modx->getObject('modChunk', array('name' => $chunkname));
-					if ($chunk) {
-						$modx->chunkieCache['@CHUNK'][$chunkname] = $chunk->getContent();
-					} else {
-						$modx->chunkieCache['@CHUNK'][$chunkname] = FALSE;
-					}
-				}
-				$template = $modx->chunkieCache['@CHUNK'][$chunkname];
+		if (substr($tpl, 0, 6) == '@FILE ') {
+			$filename = substr($tpl, 6);
+			if (!isset($modx->chunkieCache['@FILE'])) {
+				$modx->chunkieCache['@FILE'] = array();
 			}
-			$this->templates[$tpl] = $template;
+			if (!array_key_exists($filename, $modx->chunkieCache['@FILE'])) {
+				if (file_exists($modx->getOption('core_path') . $filename)) {
+					$template = file_get_contents($modx->getOption('core_path') . $filename);
+				}
+				$modx->chunkieCache['@FILE'][$filename] = $template;
+			} else {
+				$template = $modx->chunkieCache['@FILE'][$filename];
+			}
+		} elseif (substr($tpl, 0, 8) == '@INLINE ') {
+			$template = substr($tpl, 8);
+		} else {
+			if (substr($tpl, 0, 7) == '@CHUNK ') {
+				$chunkname = substr($tpl, 7);
+			} else {
+				$chunkname = $tpl;
+			}
+			if (!isset($modx->chunkieCache['@CHUNK'])) {
+				$modx->chunkieCache['@CHUNK'] = array();
+			}
+			if (!array_key_exists($chunkname, $modx->chunkieCache['@CHUNK'])) {
+				$chunk = $modx->getObject('modChunk', array('name' => $chunkname));
+				if ($chunk) {
+					$modx->chunkieCache['@CHUNK'][$chunkname] = $chunk->getContent();
+				} else {
+					$modx->chunkieCache['@CHUNK'][$chunkname] = FALSE;
+				}
+			}
+			$template = $modx->chunkieCache['@CHUNK'][$chunkname];
 		}
 
+		if ($this->options['parseLazy']) {
+			$template = str_replace('[[!', '##!', $template);
+		}
+
+		$this->template = $template;
 		return $template;
 	}
 
