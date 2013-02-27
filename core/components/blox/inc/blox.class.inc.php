@@ -185,10 +185,12 @@ class blox {
     function displayblox() {
         $datas = $this->getdatas($this->date, $this->bloxconfig['includesfile']);
         if (isset($datas['bloxoutput'])) {
-            //direkt output
+            //direct output
             $output = $datas['bloxoutput'];
+        }else{
+            $output = $this->displaydatas($datas);
         }
-        $output = $this->displaydatas($datas);
+        
         return $output;
     }
 
