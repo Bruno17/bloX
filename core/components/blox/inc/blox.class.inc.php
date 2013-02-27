@@ -361,6 +361,7 @@ class blox {
 
         $datarowTplData['config'] = $this->bloxconfig;
         $datarowTplData['userID'] = $this->bloxconfig['userID'];
+        $row['_bloxtree'] = implode('.',$bloxtree);
         $row['_idx'] = $iteration;
         $row['_alt'] = ($iteration - 1) % 2;
         $row['_first'] = $iteration == 1 ? true : '';
