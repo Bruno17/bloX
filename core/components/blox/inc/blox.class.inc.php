@@ -204,6 +204,8 @@ class blox {
         // $outerdata['innerrows']['row']='innerrows.row';
 
         $start = microtime(true);
+        $bloxtree = array();
+        $bloxtree[] = 'bloxouter';
         $cache = $modx->getOption('cacheaction', $outerdata, '');
         $cachename = $modx->getOption('cachename', $outerdata, '');
         if ($cache == '2') {
@@ -233,13 +235,13 @@ class blox {
                     }
                 }
                 if ($innertpl !== '') {
-                    $data = $this->renderdatarows($row, $innertpl, $key, $outerdata);
+                    $data = $this->renderdatarows($row, $innertpl, $key, $outerdata, $bloxtree);
                     $bloxinnerrows[$key] = $data;
                     $bloxinnercounts[$key] = count($row);
                 }
                 $endsub = microtime(true);
                 if ($this->bloxconfig['debug'] || $this->bloxconfig['debugTime']) {
-                    $this->bloxdebug['time'][] = 'Time to render (' . $key . '): ' . ($endsub - $startsub) . ' seconds';
+                    $this->bloxdebug['time'][] = 'Time to render (' . implode('.',$bloxtree).'.'.$key . '): ' . ($endsub - $startsub) . ' seconds';
                 }
             }
         }
@@ -268,9 +270,11 @@ class blox {
     //////////////////////////////////////////////////
     //renderdatarows
     /////////////////////////////////////////////////
-    function renderdatarows($rows, $tpl, $rowkey = '', $outerdata = array()) {
+    function renderdatarows($rows, $tpl, $rowkey = '', $outerdata = array(), $bloxtree=array()) {
         //$this->renderdepth++;//Todo
-
+        
+        print_r($bloxtree);
+        
         $output = '';
         $out = array();
         if (is_array($rows)) {
@@ -279,20 +283,22 @@ class blox {
 
             foreach ($rows as $row) {
                 $iteration++;
-                $out[] = $this->renderdatarow($row, $tpl, $rowkey, $outerdata, $rowscount, $iteration);
+                $out[] = $this->renderdatarow($row, $tpl, $rowkey, $outerdata, $rowscount, $iteration, $bloxtree);
             }
         }
         $output = implode($this->bloxconfig['outputSeparator'], $out);
+        
         return $output;
     }
 
     //////////////////////////////////////////////////
     //renderdatarow and custom-innerrows (bloxouterTpl)
     /////////////////////////////////////////////////
-    function renderdatarow($row, $rowTpl = 'default', $rowkey = '', $outerdata = array(), $rowscount = 0, $iteration = 0) {
+    function renderdatarow($row, $rowTpl = 'default', $rowkey = '', $outerdata = array(), $rowscount = 0, $iteration = 0, $bloxtree=array()) {
         global $modx;
 
         $date = $this->date;
+        $bloxtree[] = $rowkey.'.'.$iteration;
 
         if (isset($row['tpl'])) {
             $tplfilename = $this->bloxconfig['tplpath'] . $row['tpl'];
@@ -318,6 +324,7 @@ class blox {
 
         if (is_array($innerrows)) {
             foreach ($innerrows as $key => $innerrow) {
+                $startsub = microtime(true);
                 $innertpl = '';
                 if (isset($this->tpls[$key])) {
                     $innertpl = $this->tpls[$key];
@@ -328,11 +335,15 @@ class blox {
                     }
                 }
                 if (isset($this->templates[$innertpl]) || $innertpl !== '') {
-                    $data = $this->renderdatarows($innerrow, $innertpl, $key, $row);
+                    $data = $this->renderdatarows($innerrow, $innertpl, $key, $row, $bloxtree);
                     $datarowTplData['innerrows'][$key] = $data;
                     $bloxinnerrows[$key] = $data;
                     $bloxinnercounts[$key] = count($innerrow);
                 }
+                $endsub = microtime(true);
+                if ($this->bloxconfig['debug'] || $this->bloxconfig['debugTime']) {
+                    $this->bloxdebug['time'][] = 'Time to render (' . implode('.',$bloxtree).'.'.$key . '): ' . ($endsub - $startsub) . ' seconds';
+                }                
             }
         }
 

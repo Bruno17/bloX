@@ -1,4 +1,5 @@
 <?php
+
 /**
  * bloX
  *
@@ -26,37 +27,45 @@ $bloxconfig['path'] = 'components/blox/';
 $bloxconfig['absolutepath'] = $modx->getOption('core_path') . $bloxconfig['path'];
 $bloxconfig['component'] = $modx->getOption('component', $scriptProperties, '');
 
-$bloxconfig['cacheKey'] = $modx->getOption('cacheKey', $scriptProperties, $modx->getOption('cache_resource_key', null, 'resource'));
-$bloxconfig['cacheExpires'] = (integer) $modx->getOption('cacheExpires', $scriptProperties, $modx->getOption('cache_resource_expires', null, $modx->getOption(xPDO::OPT_CACHE_EXPIRES, null, 0)));
-$bloxconfig['cacheElementKey'] = $modx->getOption('cacheElementKey', $scriptProperties, $modx->resource->getCacheKey() . '/' . md5($modx->toJSON($scriptProperties) . $modx->toJSON($modx->request->getParameters())));
+// Include config files
+$configs = explode(',', $modx->getOption('configs', $scriptProperties, ''));
 
-$bloxconfig['cacheOptions'] = array(
-    xPDO::OPT_CACHE_KEY => $bloxconfig['cacheKey'],
-    xPDO::OPT_CACHE_HANDLER => $modx->getOption('cache_resource_handler', null, $modx->getOption(xPDO::OPT_CACHE_HANDLER, null, 'xPDOFileCache')),
-    xPDO::OPT_CACHE_EXPIRES => $bloxconfig['cacheExpires'],
-);
+foreach ($configs as $configName) {
+    if ($bloxconfig['component'] != '') {
+        $configFile = $modx->getOption('core_path') . 'components/' . $bloxconfig['component'] . '/bloxconfigs/' . $configName . '.config.inc.php'; // [ file ]
+    } else {
+        $configFile = $bloxconfig['absolutepath'] . 'configs/' . $configName . '.config.inc.php'; // [ file ]
+    }
+    if (file_exists($configFile)) {
+        include ($configFile);
+        if (isset($config) && is_array($config)) {
+            $scriptProperties = array_merge($scriptProperties, $config);
+        }
+        unset($config);
+    }
+}
+$bloxconfig = array_merge($bloxconfig, $scriptProperties);
 
-$cached = $modx->cacheManager->get($bloxconfig['cacheElementKey'], $bloxconfig['cacheOptions']);
+
+$bloxconfig['cache'] = $modx->getOption('cache', $scriptProperties, 0);
+
+if (!empty($bloxconfig['cache'])) {
+    $bloxconfig['cacheKey'] = $modx->getOption('cacheKey', $scriptProperties, $modx->getOption('cache_resource_key', null, 'resource'));
+    $bloxconfig['cacheExpires'] = (integer)$modx->getOption('cacheExpires', $scriptProperties, $modx->getOption('cache_resource_expires', null, $modx->getOption(xPDO::OPT_CACHE_EXPIRES, null, 0)));
+    $resourceCacheKey = ($modx->resource) ? $modx->resource->getCacheKey() : 'mgr/blox';
+    $bloxconfig['cacheElementKey'] = $modx->getOption('cacheElementKey', $scriptProperties, $resourceCacheKey . '/' . md5($modx->toJSON($scriptProperties) . $modx->toJSON($modx->request->getParameters())));
+
+    $bloxconfig['cacheOptions'] = array(
+        xPDO::OPT_CACHE_KEY => $bloxconfig['cacheKey'],
+        xPDO::OPT_CACHE_HANDLER => $modx->getOption('cache_resource_handler', null, $modx->getOption(xPDO::OPT_CACHE_HANDLER, null, 'xPDOFileCache')),
+        xPDO::OPT_CACHE_EXPIRES => $bloxconfig['cacheExpires'],
+        );
+
+    $cached = $modx->cacheManager->get($bloxconfig['cacheElementKey'], $bloxconfig['cacheOptions']);
+}
+
 if (!isset($cached['output'])) {
 
-    // Include config files
-    $configs = explode(',', $modx->getOption('configs', $scriptProperties, ''));
-
-    foreach ($configs as $configName) {
-        if ($bloxconfig['component'] != '') {
-            $configFile = $modx->getOption('core_path') . 'components/' . $bloxconfig['component'] . '/bloxconfigs/' . $configName . '.config.inc.php'; // [ file ]
-        } else {
-            $configFile = $bloxconfig['absolutepath'] . 'configs/' . $configName . '.config.inc.php'; // [ file ]
-        }
-        if (file_exists($configFile)) {
-            include ($configFile);
-            if (isset($config) && is_array($config)) {
-                $scriptProperties = array_merge($scriptProperties, $config);
-            }
-            unset($config);
-        }
-    }
-    $bloxconfig = array_merge($bloxconfig, $scriptProperties);
 
     $includes = $modx->getOption('includes', $bloxconfig, '');
     $includes = ($includes != '') ? explode(',', $includes) : array();
@@ -80,12 +89,14 @@ if (!isset($cached['output'])) {
     $bloxconfig['projectparent'] = ($bloxconfig['project'] != '') ? 'custom' : 'blox';
     $bloxconfig['componentpath'] = ($bloxconfig['component'] != '' && $bloxconfig['project'] != '') ? 'components/' . $bloxconfig['component'] . '/bloxprojects/' : $bloxconfig['path'] . 'projects/custom/';
     $bloxconfig['projectpath'] = ($bloxconfig['project'] != '') ? $bloxconfig['componentpath'] . $bloxconfig['project'] . '/' : $bloxconfig['path'] . 'projects/blox/' . $bloxconfig['resourceclass'] . '/';
-    $bloxconfig['task'] = $modx->getOption('task', $scriptProperties, $bloxconfig['htmlouter'], TRUE);
+    $bloxconfig['task'] = $modx->getOption('task', $scriptProperties, $bloxconfig['htmlouter'], true);
     $bloxconfig['outputSeparator'] = $modx->getOption('outputSeparator', $scriptProperties, '');
 
     $bloxconfig['tpls'] = $modx->getOption('tpls', $scriptProperties, '');
-    $bloxconfig['tplpath'] = (($tplpath = $modx->getOption('tplpath', $scriptProperties, '')) != '') ? $bloxconfig['projectpath'] . $tplpath : $bloxconfig['projectpath'] . $bloxconfig['task'] . '/templates/';
-    $bloxconfig['includespath'] = (($includespath = $modx->getOption('includespath', $scriptProperties, '')) != '') ? $bloxconfig['projectpath'] . $includespath : $bloxconfig['projectpath'] . $bloxconfig['task'] . '/includes/';
+    $bloxconfig['tplpath'] = (($tplpath = $modx->getOption('tplpath', $scriptProperties, '')) != '') ? $bloxconfig['projectpath'] . $tplpath : $bloxconfig['projectpath'] . $bloxconfig['task'] .
+        '/templates/';
+    $bloxconfig['includespath'] = (($includespath = $modx->getOption('includespath', $scriptProperties, '')) != '') ? $bloxconfig['projectpath'] . $includespath : $bloxconfig['projectpath'] . $bloxconfig['task'] .
+        '/includes/';
     $bloxconfig['cachepath'] = $bloxconfig['path'] . 'cache/';
     $bloxconfig['includesfile'] = $bloxconfig['includespath'] . 'getdatas.php'; // [ file ]
     $bloxconfig['includesclassfile'] = $bloxconfig['includespath'] . 'getdatas.class.php'; // [ file ]
@@ -99,11 +110,11 @@ if (!isset($cached['output'])) {
     $timestampyear = xetadodb_strftime('%Y', $timestamp);
     $bloxconfig['nowtimestamp'] = $timestamp;
     $bloxconfig['day'] = $modx->getOption('day', $scriptProperties, $timestampday);
-    $bloxconfig['day'] = (isset($_REQUEST['day']) && (trim($_REQUEST['day'] !== ''))) ? (string) intval($_REQUEST['day']) : $bloxconfig['day'];
+    $bloxconfig['day'] = (isset($_REQUEST['day']) && (trim($_REQUEST['day'] !== ''))) ? (string )intval($_REQUEST['day']) : $bloxconfig['day'];
     $bloxconfig['month'] = $modx->getOption('month', $scriptProperties, $timestampmonth);
-    $bloxconfig['month'] = (isset($_REQUEST['month']) && (trim($_REQUEST['month'] !== ''))) ? (string) intval($_REQUEST['month']) : $bloxconfig['month'];
+    $bloxconfig['month'] = (isset($_REQUEST['month']) && (trim($_REQUEST['month'] !== ''))) ? (string )intval($_REQUEST['month']) : $bloxconfig['month'];
     $bloxconfig['year'] = $modx->getOption('year', $scriptProperties, $timestampyear);
-    $bloxconfig['year'] = (isset($_REQUEST['year']) && (trim($_REQUEST['year'] !== ''))) ? (string) intval($_REQUEST['year']) : $bloxconfig['year'];
+    $bloxconfig['year'] = (isset($_REQUEST['year']) && (trim($_REQUEST['year'] !== ''))) ? (string )intval($_REQUEST['year']) : $bloxconfig['year'];
 
     $bloxconfig['userID'] = $modx->getLoginUserID();
 
@@ -152,7 +163,7 @@ if (!isset($cached['output'])) {
         if (!class_exists($includeclass)) {
             $includefile = $bloxconfig['absolutepath'] . 'inc/' . $includeclass . '.class.inc.php';
             if (file_exists($includefile)) {
-                include_once($includefile);
+                include_once ($includefile);
             } else {
                 $output = 'Cannot find ' . $includeclass . ' class file! (' . $includefile . ')';
                 return $output;
@@ -202,7 +213,8 @@ if (!isset($cached['output'])) {
     if ($bloxconfig['debug'] || $bloxconfig['debugTime']) {
         $blox->bloxdebug['time'][] = 'Total time (get data and render): ' . ($endtotal - $starttotal) . ' seconds';
     }
-    if ($modx->getCacheManager()) {
+    
+    if (!empty($bloxconfig['cache']) && $modx->getCacheManager()) {
         $cached = array('output' => $output);
         $modx->cacheManager->set($bloxconfig['cacheElementKey'], $cached, $bloxconfig['cacheExpires'], $bloxconfig['cacheOptions']);
     }
@@ -226,4 +238,5 @@ if ($bloxconfig['toPlaceholder'] != '') {
 //$_SESSION['bloxobject'][$modx->resource->get('id')][$bloxconfig['id']] = $blox;
 
 return $output;
+
 ?>
