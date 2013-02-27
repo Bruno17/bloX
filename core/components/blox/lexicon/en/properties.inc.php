@@ -27,11 +27,11 @@
  * Properties English Lexicon Entries for bloX
  */
 
-$_lang['prop_daterange.component'] = '';
-$_lang['prop_daterange.configs'] = '';
-$_lang['prop_daterange.includes'] = '';
+$_lang['prop_daterange.component'] = 'If set, the config file and custom project files were loaded from component folder (subfolders bloxconfigs and bloxprojects).';
+$_lang['prop_daterange.configs'] = 'Comma separated list of config filenames. Each filename is extended with the extension \'.config.inc.php\'. The config files are located in \'{core_path}/components/blox/configs\' or \'{core_path}/components/{component}/bloxconfigs\' if component parameter is set. The snippet properties could be predefined by the config array in each config file.';
+$_lang['prop_daterange.includes'] = 'Comma separated list of class filenames. Each filename is extended with the extension \'.class.inc.php\'. The class files have to be located in \'{core_path}/components/blox/inc\'.';
 $_lang['prop_daterange.project'] = '';
 $_lang['prop_daterange.task'] = '';
-$_lang['prop_daterange.packagename'] = '';
-$_lang['prop_daterange.classname'] = '';
-$_lang['prop_daterange.where'] = '';
+$_lang['prop_daterange.packagename'] = 'Package name of the xPDO model to retreive the data.';
+$_lang['prop_daterange.classname'] = 'Class name of the xPDO model to retreive the data.';
+$_lang['prop_daterange.where'] = 'JSON encoded xPDO where clause the data is retreived with.';
