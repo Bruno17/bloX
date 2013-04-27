@@ -69,7 +69,7 @@ if (!isset($cached['output'])) {
 
     $includes = $modx->getOption('includes', $bloxconfig, '');
     $includes = ($includes != '') ? explode(',', $includes) : array();
-    $includes = array_merge(array('blox', 'chunkie'), $includes);
+    $includes[] = 'chunkie';
 
     $adodbFile = $bloxconfig['absolutepath'] . 'inc/adodb-time.inc.php';
     if (file_exists($adodbFile)) {
@@ -77,6 +77,7 @@ if (!isset($cached['output'])) {
     }
 
     // Set defaults
+    
     $bloxconfig['id'] = $modx->getOption('id', $scriptProperties, ''); // [ string ]
     $bloxconfig['id_'] = ($bloxconfig['id'] != '') ? $bloxconfig['id'] . '_' : ''; // [ string ]
     $bloxconfig['distinct'] = (intval($modx->getOption('distinct', $scriptProperties, '1'))) ? 'distinct' : ''; // 1 or 0 [ string ]
@@ -148,6 +149,7 @@ if (!isset($cached['output'])) {
     $bloxconfig['debug'] = intval($modx->getOption('debug', $scriptProperties, '0'));
     $bloxconfig['debugTime'] = intval($modx->getOption('debugTime', $scriptProperties, '0'));
 
+    $bloxconfig['parseFast'] = $modx->getOption('parseFast', $scriptProperties, false); 
     $bloxconfig['parseLazy'] = intval($modx->getOption('parseLazy', $scriptProperties, '0'));
     $bloxconfig['toPlaceholder'] = $modx->getOption('toPlaceholder', $scriptProperties, '');
 
@@ -156,6 +158,16 @@ if (!isset($cached['output'])) {
             $includes[] = 'bloxhelpers';
         }
     }
+    if ($bloxconfig['parseFast']) {
+        if (!in_array('bloxf', $includes)) {
+            $includes[] = 'bloxf';
+        }
+    }else{
+        if (!in_array('blox', $includes)) {
+            $includes[] = 'blox';
+        }        
+    }    
+
 
     // Include classes
     foreach ($includes as $includeclass) {
@@ -180,6 +192,15 @@ if (!isset($cached['output'])) {
                     return $output;
                 }
                 break;
+            case 'bloxf':
+                if (class_exists($includeclass)) {
+                    // Initialize class
+                    $blox = new bloxf($bloxconfig);
+                } else {
+                    $output = $includeclass . ' class not found';
+                    return $output;
+                }
+                break;                
             case 'xettcal':
                 if (class_exists($includeclass)) {
                     // Initialize class
