@@ -77,7 +77,7 @@ if (!isset($cached['output'])) {
     }
 
     // Set defaults
-    
+
     $bloxconfig['id'] = $modx->getOption('id', $scriptProperties, ''); // [ string ]
     $bloxconfig['id_'] = ($bloxconfig['id'] != '') ? $bloxconfig['id'] . '_' : ''; // [ string ]
     $bloxconfig['distinct'] = (intval($modx->getOption('distinct', $scriptProperties, '1'))) ? 'distinct' : ''; // 1 or 0 [ string ]
@@ -149,7 +149,8 @@ if (!isset($cached['output'])) {
     $bloxconfig['debug'] = intval($modx->getOption('debug', $scriptProperties, '0'));
     $bloxconfig['debugTime'] = intval($modx->getOption('debugTime', $scriptProperties, '0'));
 
-    $bloxconfig['parseFast'] = $modx->getOption('parseFast', $scriptProperties, false); 
+    $bloxconfig['fastParseTag'] = $modx->getOption('fastParseTag', $scriptProperties, '[[+++'); //all placholders starting with this tag are replaced with innerrows-keypath-placeholders
+    $bloxconfig['parseFast'] = $modx->getOption('parseFast', $scriptProperties, false); // create one big Template with fastParse - placehholders and parse all at once
     $bloxconfig['parseLazy'] = intval($modx->getOption('parseLazy', $scriptProperties, '0'));
     $bloxconfig['toPlaceholder'] = $modx->getOption('toPlaceholder', $scriptProperties, '');
 
@@ -158,15 +159,9 @@ if (!isset($cached['output'])) {
             $includes[] = 'bloxhelpers';
         }
     }
-    if ($bloxconfig['parseFast']) {
-        if (!in_array('bloxf', $includes)) {
-            $includes[] = 'bloxf';
-        }
-    }else{
-        if (!in_array('blox', $includes)) {
-            $includes[] = 'blox';
-        }        
-    }    
+    if (!in_array('blox', $includes)) {
+        $includes[] = 'blox';
+    }
 
 
     // Include classes
@@ -192,15 +187,6 @@ if (!isset($cached['output'])) {
                     return $output;
                 }
                 break;
-            case 'bloxf':
-                if (class_exists($includeclass)) {
-                    // Initialize class
-                    $blox = new bloxf($bloxconfig);
-                } else {
-                    $output = $includeclass . ' class not found';
-                    return $output;
-                }
-                break;                
             case 'xettcal':
                 if (class_exists($includeclass)) {
                     // Initialize class
@@ -224,21 +210,26 @@ if (!isset($cached['output'])) {
     }
 
     if ($bloxconfig['debug']) {
-        $blox->bloxdebug['config'][] = 'bloX config: ' . print_r($bloxconfig, true);
+        $cfg = $bloxconfig;
+        unset($cfg['fastParseTag']);
+        $blox->bloxdebug['config'][] = 'bloX config: ' . print_r($cfg, true);
     }
 
     // Output
     $starttotal = microtime(true);
     $output = $blox->displayblox();
+            
     $endtotal = microtime(true);
     if ($bloxconfig['debug'] || $bloxconfig['debugTime']) {
         $blox->bloxdebug['time'][] = 'Total time (get data and render): ' . ($endtotal - $starttotal) . ' seconds';
     }
-    
+
     if (!empty($bloxconfig['cache']) && $modx->getCacheManager()) {
         $cached = array('output' => $output);
         $modx->cacheManager->set($bloxconfig['cacheElementKey'], $cached, $bloxconfig['cacheExpires'], $bloxconfig['cacheOptions']);
     }
+    
+
 } else {
     $output = $cached['output'];
 }

@@ -188,7 +188,12 @@ class blox {
             //direct output
             $output = $datas['bloxoutput'];
         }else{
-            $output = $this->displaydatas($datas);
+            if ($this->bloxconfig['parseFast']){
+                $output = $this->displaydatasFast($datas);
+            }else{
+                $output = $this->displaydatas($datas);
+            }
+            
         }
         
         return $output;
@@ -204,8 +209,6 @@ class blox {
         // $outerdata['innerrows']['row']='innerrows.row';
 
         $start = microtime(true);
-        $bloxtree = array();
-        $bloxtree[] = 'bloxouter';
         $cache = $modx->getOption('cacheaction', $outerdata, '');
         $cachename = $modx->getOption('cachename', $outerdata, '');
         if ($cache == '2') {
@@ -235,13 +238,13 @@ class blox {
                     }
                 }
                 if ($innertpl !== '') {
-                    $data = $this->renderdatarows($row, $innertpl, $key, $outerdata, $bloxtree);
+                    $data = $this->renderdatarows($row, $innertpl, $key, $outerdata);
                     $bloxinnerrows[$key] = $data;
                     $bloxinnercounts[$key] = count($row);
                 }
                 $endsub = microtime(true);
                 if ($this->bloxconfig['debug'] || $this->bloxconfig['debugTime']) {
-                    $this->bloxdebug['time'][] = 'Time to render (' . implode('.',$bloxtree).'.'.$key . '): ' . ($endsub - $startsub) . ' seconds';
+                    $this->bloxdebug['time'][] = 'Time to render (' . $key . '): ' . ($endsub - $startsub) . ' seconds';
                 }
             }
         }
@@ -268,13 +271,83 @@ class blox {
     }
 
     //////////////////////////////////////////////////
+    //displaydatas (bloxouterTpl)
+    /////////////////////////////////////////////////
+
+    function displaydatasFast($outerdata = array()) {
+        global $modx;
+
+        $start = microtime(true);
+
+        $searches = array();
+        $replaces = array();
+
+        $cache = $modx->getOption('cacheaction', $outerdata, '');
+        $cachename = $modx->getOption('cachename', $outerdata, '');
+        if ($cache == '2') {
+            return $outerdata['cacheoutput'];
+        }
+
+        $this->parser = new bloxChunkie($this->tpls['bloxouter'], array('parseLazy' => $this->bloxconfig['parseLazy']));
+        $this->parser->maxdepth = 20;
+        $this->parser->CreateVars($outerdata);
+        $innerrows = $modx->getOption('innerrows', $outerdata, array());
+        $embeds = $modx->getOption('embeds', $outerdata, array());
+
+        $this->parser->template = $this->replaceEmbeds($embeds,$this->parser->template);
+
+        unset($outerdata['innerrows'], $outerdata['embeds']);
+
+        if (count($innerrows) > 0) {
+            foreach ($innerrows as $key => $row) {
+                $startsub = microtime(true);
+                $innertpl = $this->getTpl($key);
+
+                if ($innertpl !== '') {
+                    $data = $this->renderdatarows($row, $innertpl, $key, $outerdata);
+                    $searches[] = '[[+innerrows.' . $key . ']]';
+                    $replaces[] = $data;
+                }
+                $endsub = microtime(true);
+                if ($this->bloxconfig['debug'] || $this->bloxconfig['debugTime']) {
+                    $this->bloxdebug['time'][] = 'Time to render (' . $key . '): ' . ($endsub - $startsub) . ' seconds';
+                }
+            }
+        }
+
+        $this->parser->placeholders['blox.config'] = $this->bloxconfig;
+        $this->parser->placeholders['blox.userID'] = $this->bloxconfig['userID'];
+        $this->parser->placeholders['blox.date'] = $this->date;
+
+        //replace innerrows
+        $output = str_replace($searches, $replaces, $this->parser->template);
+        //replace fastParse - placeholders also in bloxouter - template
+        $output = str_replace($this->bloxconfig['fastParseTag'], '[[+', $output);        
+
+        //echo str_replace('[[+','[ [+',$daten);
+        //echo '<pre>' . print_r($this->parser->getPlaceholders(), 1) . '</pre>';
+        $this->parser->template = $output;
+        $output = $this->parser->Render($this->bloxconfig['parseLazy']);
+        unset($this->parser);
+        if ($cache == '1') {
+            $this->cache->writeCache($cachename, $output);
+        }
+
+
+
+        $end = microtime(true);
+        if ($this->bloxconfig['debug'] || $this->bloxconfig['debugTime']) {
+            $this->bloxdebug['time'][] = 'Time to render all: ' . ($end - $start) . ' seconds';
+        }
+        return $output;
+    }
+ 
+    //////////////////////////////////////////////////
     //renderdatarows
     /////////////////////////////////////////////////
-    function renderdatarows($rows, $tpl, $rowkey = '', $outerdata = array(), $bloxtree=array()) {
+    function renderdatarows($rows, $tpl, $rowkey = '', $outerdata = array(), $outerpath = '', $fast=false) {
         //$this->renderdepth++;//Todo
-        
-        print_r($bloxtree);
-        
+
         $output = '';
         $out = array();
         if (is_array($rows)) {
@@ -282,23 +355,28 @@ class blox {
             $rowscount = count($rows);
 
             foreach ($rows as $row) {
+                $keypath = $outerpath . 'innerrows.' . $rowkey . '.' . $iteration . '.';
+                if ($this->bloxconfig['parseFast']){
+                    $out[] = $this->renderdatarowFast($row, $tpl, $rowkey, $outerdata, $rowscount, $iteration, $keypath, $outerpath);
+                }
+                else{
+                    $out[] = $this->renderdatarow($row, $tpl, $rowkey, $outerdata, $rowscount, $iteration);    
+                }
+                
                 $iteration++;
-                $out[] = $this->renderdatarow($row, $tpl, $rowkey, $outerdata, $rowscount, $iteration, $bloxtree);
             }
         }
         $output = implode($this->bloxconfig['outputSeparator'], $out);
-        
         return $output;
-    }
+    }    
 
     //////////////////////////////////////////////////
     //renderdatarow and custom-innerrows (bloxouterTpl)
     /////////////////////////////////////////////////
-    function renderdatarow($row, $rowTpl = 'default', $rowkey = '', $outerdata = array(), $rowscount = 0, $iteration = 0, $bloxtree=array()) {
+    function renderdatarow($row, $rowTpl = 'default', $rowkey = '', $outerdata = array(), $rowscount = 0, $iteration = 0) {
         global $modx;
 
         $date = $this->date;
-        $bloxtree[] = $rowkey.'.'.$iteration;
 
         if (isset($row['tpl'])) {
             $tplfilename = $this->bloxconfig['tplpath'] . $row['tpl'];
@@ -324,7 +402,6 @@ class blox {
 
         if (is_array($innerrows)) {
             foreach ($innerrows as $key => $innerrow) {
-                $startsub = microtime(true);
                 $innertpl = '';
                 if (isset($this->tpls[$key])) {
                     $innertpl = $this->tpls[$key];
@@ -335,15 +412,11 @@ class blox {
                     }
                 }
                 if (isset($this->templates[$innertpl]) || $innertpl !== '') {
-                    $data = $this->renderdatarows($innerrow, $innertpl, $key, $row, $bloxtree);
+                    $data = $this->renderdatarows($innerrow, $innertpl, $key, $row);
                     $datarowTplData['innerrows'][$key] = $data;
                     $bloxinnerrows[$key] = $data;
                     $bloxinnercounts[$key] = count($innerrow);
                 }
-                $endsub = microtime(true);
-                if ($this->bloxconfig['debug'] || $this->bloxconfig['debugTime']) {
-                    $this->bloxdebug['time'][] = 'Time to render (' . implode('.',$bloxtree).'.'.$key . '): ' . ($endsub - $startsub) . ' seconds';
-                }                
             }
         }
 
@@ -361,7 +434,6 @@ class blox {
 
         $datarowTplData['config'] = $this->bloxconfig;
         $datarowTplData['userID'] = $this->bloxconfig['userID'];
-        $row['_bloxtree'] = implode('.',$bloxtree);
         $row['_idx'] = $iteration;
         $row['_alt'] = ($iteration - 1) % 2;
         $row['_first'] = $iteration == 1 ? true : '';
@@ -375,6 +447,56 @@ class blox {
 
         return $output;
     }
+
+    //////////////////////////////////////////////////
+    //renderdatarow and custom-innerrows (bloxouterTpl)
+    /////////////////////////////////////////////////
+    function renderdatarowFast($row, $rowTpl = 'default', $rowkey = '', $outerdata = array(), $rowscount = 0, $iteration = 0, $keypath = '', $outerpath = '') {
+
+        global $modx;
+
+        $template = $this->getRowTpl($row,$rowTpl);
+        
+        $searches = array();
+        $replaces = array();
+        $innerrows = $modx->getOption('innerrows', $row, '');
+        $embeds = $modx->getOption('embeds', $row, array());
+        
+        $template = $this->replaceEmbeds($embeds,$template);
+        unset($row['innerrows'], $row['embeds']);
+
+        if (is_array($innerrows)) {
+            foreach ($innerrows as $key => $innerrow) {
+                $innertpl = $this->getTpl($key);
+                if (isset($this->templates[$innertpl]) || $innertpl !== '') {
+                    $data = $this->renderdatarows($innerrow, $innertpl, $key, $row, $keypath);
+                    $searches[] = '[[+innerrows.' . $key . ']]';
+                    $replaces[] = $data;
+                    $this->parser->placeholders[$keypath . 'innercounts.' . $key] = count($innerrow);
+                }
+            }
+        }
+
+        $this->parser->placeholders[$keypath . '_keypath'] = $keypath;
+        $this->parser->placeholders[$keypath . '_parentpath'] = $outerpath;
+        $this->parser->placeholders[$keypath . '_rowscount'] = $rowscount;
+        $this->parser->placeholders[$keypath . '_idx'] = $iteration + 1;
+        $this->parser->placeholders[$keypath . '_0idx'] = $iteration;
+        $this->parser->placeholders[$keypath . '_alt'] = ($iteration) % 2;
+        $this->parser->placeholders[$keypath . '_first'] = ($iteration + 1) == 1 ? true : '';
+        $this->parser->placeholders[$keypath . '_last'] = ($iteration + 1) == $rowscount ? true : '';
+        $this->parser->placeholders[$keypath . ''];
+
+        //echo $keypath . '<br />';
+        //echo $rowkey . ',';
+        $output = str_replace($searches,$replaces,$template);         
+
+        $output = str_replace($this->bloxconfig['fastParseTag'], '[[+' . $keypath, $output);
+
+        unset($tpl, $row);
+
+        return $output;
+    }    
 
     //////////////////////////////////////////////////////
     //Daten-array holen
@@ -402,6 +524,65 @@ class blox {
 
         return $bloxdatas;
     }
+    
+
+    function replaceEmbeds($embeds, $template_in){
+        if (count($embeds) > 0) {
+            foreach ($embeds as $key => $embed) {
+                if ($embed) {
+                    $embedtpl = $this->getTpl($key);
+                    $embedparser = new bloxChunkie($embedtpl, array('parseLazy' => $this->bloxconfig['parseLazy']));
+                    $template = $embedparser->template;
+                    $template_in = str_replace('[[+embeds.' . $key . ']]',$template,$template_in);                   
+                }
+            }
+            //any unreplaced embeds inside?
+            foreach ($embeds as $key => $embed) {
+                if ($embed) {
+                    if (strpos($template_in,'[[+embeds.' . $key . ']]') > 0){
+                        $template_in = $this->replaceEmbeds($embeds,$template_in);    
+                    }
+                }
+            }            
+        }
+        return $template_in;        
+    }
+
+    function getTpl($key) {
+        global $modx;
+
+        $tpl = '';
+        if (isset($this->tpls[$key])) {
+            $tpl = $this->tpls[$key];
+        } else {
+            $tplfile = $this->bloxconfig['tplpath'] . $key . "Tpl.html";
+            if (file_exists($modx->getOption('core_path') . $tplfile)) {
+                $tpl = "@FILE " . $tplfile;
+            }
+        }
+        return $tpl;
+    }
+    
+    function getRowTpl($row,$rowTpl){
+        global $modx;
+        
+        if (isset($row['tpl'])) {
+            $tplfilename = $this->bloxconfig['tplpath'] . $row['tpl'];
+            if (($row['tpl'] !== '') && (file_exists($modx->getOption('core_path') . $tplfilename))) {
+                $rowTpl = "@FILE " . $tplfilename;
+            }
+            $tplfilename = $this->bloxconfig['tplpath'] . $row['tpl'] . 'Tpl.html';
+            if (($row['tpl'] !== '') && (file_exists($modx->getOption('core_path') . $tplfilename))) {
+                $rowTpl = "@FILE " . $tplfilename;
+            }
+        }
+
+        if (substr($rowTpl, 0, 7) == '@FIELD:') {
+            $rowTpl = ($row[substr($rowTpl, 7)]);
+        }
+        $parser = new bloxChunkie($rowTpl, array('parseLazy' => $this->bloxconfig['parseLazy']));
+        return $parser->template;          
+    }    
 
 }
 
