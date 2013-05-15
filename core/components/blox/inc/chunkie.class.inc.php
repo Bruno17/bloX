@@ -195,7 +195,6 @@ if (!class_exists('bloxChunkie')) {
 
             $template = "";
 
-
             if (substr($tpl, 0, 6) == "@FILE ") {
                 $filename = substr($tpl, 6);
                 if (!isset($modx->chunkieCache['@FILE'])) {

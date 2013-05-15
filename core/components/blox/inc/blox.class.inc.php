@@ -161,14 +161,14 @@ class blox {
                         $selectfields = $modx->getOption('selectfields', $join, '');
 
                         /*
-                          if ($joinFkMeta = $modx->getFKDefinition($joinclass, 'Resource')){
-                          $localkey = $joinFkMeta['local'];
-                          }
-                         */
+                        if ($joinFkMeta = $modx->getFKDefinition($joinclass, 'Resource')){
+                        $localkey = $joinFkMeta['local'];
+                        }
+                        */
                         $c->leftjoin($joinclass, $jalias, $on);
                         $selectfields = !empty($selectfields) ? explode(',', $selectfields) : null;
                         if ($forcounting) {
-                            
+
                         } else {
                             $c->select($modx->getSelectColumns($joinclass, $jalias, $jalias . '_', $selectfields));
                         }
@@ -187,15 +187,15 @@ class blox {
         if (isset($datas['bloxoutput'])) {
             //direct output
             $output = $datas['bloxoutput'];
-        }else{
-            if ($this->bloxconfig['parseFast']){
+        } else {
+            if ($this->bloxconfig['parseFast']) {
                 $output = $this->displaydatasFast($datas);
-            }else{
+            } else {
                 $output = $this->displaydatas($datas);
             }
-            
+
         }
-        
+
         return $output;
     }
 
@@ -294,7 +294,7 @@ class blox {
         $innerrows = $modx->getOption('innerrows', $outerdata, array());
         $embeds = $modx->getOption('embeds', $outerdata, array());
 
-        $this->parser->template = $this->replaceEmbeds($embeds,$this->parser->template);
+        $this->parser->template = $this->replaceEmbeds($embeds, $this->parser->template);
 
         unset($outerdata['innerrows'], $outerdata['embeds']);
 
@@ -322,7 +322,7 @@ class blox {
         //replace innerrows
         $output = str_replace($searches, $replaces, $this->parser->template);
         //replace fastParse - placeholders also in bloxouter - template
-        $output = str_replace($this->bloxconfig['fastParseTag'], '[[+', $output);        
+        $output = str_replace($this->bloxconfig['fastParseTag'], '[[+', $output);
 
         //echo str_replace('[[+','[ [+',$daten);
         //echo '<pre>' . print_r($this->parser->getPlaceholders(), 1) . '</pre>';
@@ -334,18 +334,17 @@ class blox {
         }
 
 
-
         $end = microtime(true);
         if ($this->bloxconfig['debug'] || $this->bloxconfig['debugTime']) {
             $this->bloxdebug['time'][] = 'Time to render all: ' . ($end - $start) . ' seconds';
         }
         return $output;
     }
- 
+
     //////////////////////////////////////////////////
     //renderdatarows
     /////////////////////////////////////////////////
-    function renderdatarows($rows, $tpl, $rowkey = '', $outerdata = array(), $outerpath = '', $fast=false) {
+    function renderdatarows($rows, $tpl, $rowkey = '', $outerdata = array(), $outerpath = '', $fast = false) {
         //$this->renderdepth++;//Todo
 
         $output = '';
@@ -356,19 +355,18 @@ class blox {
 
             foreach ($rows as $row) {
                 $keypath = $outerpath . 'innerrows.' . $rowkey . '.' . $iteration . '.';
-                if ($this->bloxconfig['parseFast']){
+                if ($this->bloxconfig['parseFast']) {
                     $out[] = $this->renderdatarowFast($row, $tpl, $rowkey, $outerdata, $rowscount, $iteration, $keypath, $outerpath);
+                } else {
+                    $out[] = $this->renderdatarow($row, $tpl, $rowkey, $outerdata, $rowscount, $iteration);
                 }
-                else{
-                    $out[] = $this->renderdatarow($row, $tpl, $rowkey, $outerdata, $rowscount, $iteration);    
-                }
-                
+
                 $iteration++;
             }
         }
         $output = implode($this->bloxconfig['outputSeparator'], $out);
         return $output;
-    }    
+    }
 
     //////////////////////////////////////////////////
     //renderdatarow and custom-innerrows (bloxouterTpl)
@@ -379,13 +377,16 @@ class blox {
         $date = $this->date;
 
         if (isset($row['tpl'])) {
-            $tplfilename = $this->bloxconfig['tplpath'] . $row['tpl'];
-            if (($row['tpl'] !== '') && (file_exists($modx->getOption('core_path') . $tplfilename))) {
-                $rowTpl = "@FILE " . $tplfilename;
-            }
-            $tplfilename = $this->bloxconfig['tplpath'] . $row['tpl'] . 'Tpl.html';
-            if (($row['tpl'] !== '') && (file_exists($modx->getOption('core_path') . $tplfilename))) {
-                $rowTpl = "@FILE " . $tplfilename;
+            $tplfilename1 = $this->bloxconfig['tplpath'] . $row['tpl'];
+            $tplfilename2 = $this->bloxconfig['tplpath'] . $row['tpl'] . 'Tpl.html';
+            if ($row['tpl'] !== '') {
+                if (file_exists($modx->getOption('core_path') . $tplfilename1)) {
+                    $rowTpl = "@FILE " . $tplfilename1;
+                } elseif (file_exists($modx->getOption('core_path') . $tplfilename2)) {
+                    $rowTpl = "@FILE " . $tplfilename2;
+                } else {
+                    $rowTpl = $row['tpl'];
+                }
             }
         }
 
@@ -455,14 +456,14 @@ class blox {
 
         global $modx;
 
-        $template = $this->getRowTpl($row,$rowTpl);
-        
+        $template = $this->getRowTpl($row, $rowTpl);
+
         $searches = array();
         $replaces = array();
         $innerrows = $modx->getOption('innerrows', $row, '');
         $embeds = $modx->getOption('embeds', $row, array());
-        
-        $template = $this->replaceEmbeds($embeds,$template);
+
+        $template = $this->replaceEmbeds($embeds, $template);
         unset($row['innerrows'], $row['embeds']);
 
         if (is_array($innerrows)) {
@@ -489,14 +490,14 @@ class blox {
 
         //echo $keypath . '<br />';
         //echo $rowkey . ',';
-        $output = str_replace($searches,$replaces,$template);         
+        $output = str_replace($searches, $replaces, $template);
 
         $output = str_replace($this->bloxconfig['fastParseTag'], '[[+' . $keypath, $output);
 
         unset($tpl, $row);
 
         return $output;
-    }    
+    }
 
     //////////////////////////////////////////////////////
     //Daten-array holen
@@ -524,28 +525,28 @@ class blox {
 
         return $bloxdatas;
     }
-    
 
-    function replaceEmbeds($embeds, $template_in){
+
+    function replaceEmbeds($embeds, $template_in) {
         if (count($embeds) > 0) {
             foreach ($embeds as $key => $embed) {
                 if ($embed) {
                     $embedtpl = $this->getTpl($key);
                     $embedparser = new bloxChunkie($embedtpl, array('parseLazy' => $this->bloxconfig['parseLazy']));
                     $template = $embedparser->template;
-                    $template_in = str_replace('[[+embeds.' . $key . ']]',$template,$template_in);                   
+                    $template_in = str_replace('[[+embeds.' . $key . ']]', $template, $template_in);
                 }
             }
             //any unreplaced embeds inside?
             foreach ($embeds as $key => $embed) {
                 if ($embed) {
-                    if (strpos($template_in,'[[+embeds.' . $key . ']]') > 0){
-                        $template_in = $this->replaceEmbeds($embeds,$template_in);    
+                    if (strpos($template_in, '[[+embeds.' . $key . ']]') > 0) {
+                        $template_in = $this->replaceEmbeds($embeds, $template_in);
                     }
                 }
-            }            
+            }
         }
-        return $template_in;        
+        return $template_in;
     }
 
     function getTpl($key) {
@@ -562,18 +563,19 @@ class blox {
         }
         return $tpl;
     }
-    
-    function getRowTpl($row,$rowTpl){
+
+    function getRowTpl($row, $rowTpl) {
         global $modx;
-        
-        if (isset($row['tpl'])) {
-            $tplfilename = $this->bloxconfig['tplpath'] . $row['tpl'];
-            if (($row['tpl'] !== '') && (file_exists($modx->getOption('core_path') . $tplfilename))) {
-                $rowTpl = "@FILE " . $tplfilename;
-            }
-            $tplfilename = $this->bloxconfig['tplpath'] . $row['tpl'] . 'Tpl.html';
-            if (($row['tpl'] !== '') && (file_exists($modx->getOption('core_path') . $tplfilename))) {
-                $rowTpl = "@FILE " . $tplfilename;
+
+        $tplfilename1 = $this->bloxconfig['tplpath'] . $row['tpl'];
+        $tplfilename2 = $this->bloxconfig['tplpath'] . $row['tpl'] . 'Tpl.html';
+        if ($row['tpl'] !== '') {
+            if (file_exists($modx->getOption('core_path') . $tplfilename1)) {
+                $rowTpl = "@FILE " . $tplfilename1;
+            } elseif (file_exists($modx->getOption('core_path') . $tplfilename2)) {
+                $rowTpl = "@FILE " . $tplfilename2;
+            } else {
+                $rowTpl = $row['tpl'];
             }
         }
 
@@ -581,8 +583,8 @@ class blox {
             $rowTpl = ($row[substr($rowTpl, 7)]);
         }
         $parser = new bloxChunkie($rowTpl, array('parseLazy' => $this->bloxconfig['parseLazy']));
-        return $parser->template;          
-    }    
+        return $parser->template;
+    }
 
 }
 
