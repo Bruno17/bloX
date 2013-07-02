@@ -51,6 +51,12 @@ class Pagination {
 	var $original_query_string = '';
 	var $display_pages = TRUE;
 	var $anchor_class = '';
+    var $link_text = '[[+loop]]';
+	var $page_links_open = '';
+	var $page_links_close = '';
+    var $show_inactive_prev_next = false;
+    var $prev_class = 'prev';
+    var $next_class = 'next';        
 
 	/**
 	 * Constructor
@@ -169,7 +175,7 @@ class Pagination {
 		$output = '';
 
 		// Render the "First" link
-		if ($this->first_link !== FALSE AND $this->cur_page > ($this->num_links + 1)) {
+		if ($this->first_link AND $this->cur_page > ($this->num_links + 1)) {
 			$first_url = ($this->first_url == '') ? $modx->makeUrl($cur_id, '', $this->original_query_string) : $this->first_url;
 			$output .= $this->first_tag_open . '<a ' . $this->anchor_class . 'href="' . $first_url . '">' . $this->first_link . '</a>' . $this->first_tag_close;
 		}
@@ -182,39 +188,45 @@ class Pagination {
 				$i = $uri_page_number - $this->per_page;
 			}
 			if ($i == 1 && $this->first_url != '') {
-				$output .= $this->prev_tag_open . '<a ' . $this->anchor_class . 'href="' . $this->first_url . '">' . $this->prev_link . '</a>' . $this->prev_tag_close;
+				$output .= $this->prev_tag_open . '<a class="' . $this->prev_class . '"href="' . $this->first_url . '">' . $this->prev_link . '</a>' . $this->prev_tag_close;
 			} else {
 				$i = ($i == 1) ? $this->original_query_string : $this->page_query_string . '=' . $i . $this->original_query_string;
-				$output .= $this->prev_tag_open . '<a ' . $this->anchor_class . 'href="' . $modx->makeUrl($cur_id, '', $i) . '">' . $this->prev_link . '</a>' . $this->prev_tag_close;
+				$output .= $this->prev_tag_open . '<a class="' . $this->prev_class . '"href="' . $modx->makeUrl($cur_id, '', $i) . '">' . $this->prev_link . '</a>' . $this->prev_tag_close;
 			}
-		}
+		} elseif ($this->show_inactive_prev_next) {
+            $output .= '<a class="' . $this->prev_class . ' disabled"></a>';
+        }
 
 		// Render the pages
 		if ($this->display_pages !== FALSE) {
 			// Write the digit links
-			for ($loop = $start - 1; $loop <= $end; $loop++) {
+			$output .= $this->page_links_open ;
+            for ($loop = $start - 1; $loop <= $end; $loop++) {
 				if ($this->use_page_numbers) {
 					$i = $loop;
 				} else {
 					$i = ($loop * $this->per_page) - $this->per_page;
 				}
+                
+                $link_text = str_replace('[[+loop]]',$loop,$this->link_text);
 
 				if ($i >= $base_page) {
 					if ($this->cur_page == $loop) {
-						$output .= $this->cur_tag_open . $loop . $this->cur_tag_close; // Current page
+						$output .= $this->cur_tag_open . $link_text . $this->cur_tag_close; // Current page
 					} else {
 						$n = ($i == $base_page) ? '' : $i;
 
 						if ($n == '' && $this->first_url != '') {
-							$output .= $this->num_tag_open . '<a ' . $this->anchor_class . 'href="' . $this->first_url . '">' . $loop . '</a>' . $this->num_tag_close;
+							$output .= $this->num_tag_open . '<a ' . $this->anchor_class . 'href="' . $this->first_url . '">' . $link_text . '</a>' . $this->num_tag_close;
 						} else {
 							$n = ($n == '') ? '' : $this->page_query_string . '=' . $n;
 
-							$output .= $this->num_tag_open . '<a ' . $this->anchor_class . 'href="' . $modx->makeUrl($cur_id, '', $n . $this->original_query_string) . '">' . $loop . '</a>' . $this->num_tag_close;
+							$output .= $this->num_tag_open . '<a ' . $this->anchor_class . 'href="' . $modx->makeUrl($cur_id, '', $n . $this->original_query_string) . '">' . $link_text . '</a>' . $this->num_tag_close;
 						}
 					}
 				}
 			}
+            $output .= $this->page_links_close ;
 		}
 
 		// Render the "next" link
@@ -224,11 +236,13 @@ class Pagination {
 			} else {
 				$i = ($this->cur_page * $this->per_page);
 			}
-			$output .= $this->next_tag_open . '<a ' . $this->anchor_class . 'href="' . $modx->makeUrl($cur_id, '', $this->page_query_string . '=' . $i . $this->original_query_string) . '">' . $this->next_link . '</a>' . $this->next_tag_close;
-		}
+			$output .= $this->next_tag_open . '<a class="' . $this->next_class . '"href="' . $modx->makeUrl($cur_id, '', $this->page_query_string . '=' . $i . $this->original_query_string) . '">' . $this->next_link . '</a>' . $this->next_tag_close;
+		}elseif ($this->show_inactive_prev_next) {
+            $output .= '<a class="' . $this->next_class . ' disabled"></a>';
+        }
 
 		// Render the "Last" link
-		if ($this->last_link !== FALSE AND ($this->cur_page + $this->num_links) < $num_pages) {
+		if ($this->last_link AND ($this->cur_page + $this->num_links) < $num_pages) {
 			if ($this->use_page_numbers) {
 				$i = $num_pages;
 			} else {
