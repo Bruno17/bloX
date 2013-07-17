@@ -184,6 +184,7 @@ class bloxhelpers {
                     $children = $modx->getChildIds($docId, 1, array('context' => $this->bloxconfig['context'], 'where' => $this->bloxconfig['where']));
                     if ($children) {
                         $childMenu = $this->buildMenu($children, $depth, $docInfo, $parentIds, $level);
+                        $levelDocs[$docId]['childcount'] = count($childMenu);
                         if (count($childMenu)) {
                             $levelDocs[$docId]['level' . ($level + 1)] = $childMenu;
                         }
