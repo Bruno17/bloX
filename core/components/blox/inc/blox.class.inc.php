@@ -227,16 +227,8 @@ class blox {
         if (count($innerrows) > 0) {
             foreach ($innerrows as $key => $row) {
                 $startsub = microtime(true);
-                $daten = '';
-                $innertpl = '';
-                if (isset($this->tpls[$key])) {
-                    $innertpl = $this->tpls[$key];
-                } else {
-                    $tplfile = $this->bloxconfig['tplpath'] . $key . "Tpl.html";
-                    if (file_exists($modx->getOption('core_path') . $tplfile)) {
-                        $innertpl = "@FILE " . $tplfile;
-                    }
-                }
+                //$daten = '';
+                $innertpl = $this->getTpl($key);
                 if ($innertpl !== '') {
                     $data = $this->renderdatarows($row, $innertpl, $key, $outerdata);
                     $bloxinnerrows[$key] = $data;
@@ -375,24 +367,12 @@ class blox {
         global $modx;
 
         $date = $this->date;
-
-        if (isset($row['tpl'])) {
-            $tplfilename1 = $this->bloxconfig['tplpath'] . $row['tpl'];
-            $tplfilename2 = $this->bloxconfig['tplpath'] . $row['tpl'] . 'Tpl.html';
-            if ($row['tpl'] !== '') {
-                if (file_exists($modx->getOption('core_path') . $tplfilename1)) {
-                    $rowTpl = "@FILE " . $tplfilename1;
-                } elseif (file_exists($modx->getOption('core_path') . $tplfilename2)) {
-                    $rowTpl = "@FILE " . $tplfilename2;
-                } else {
-                    $rowTpl = $row['tpl'];
-                }
-            }
+        $tplN = '';
+        if (!empty($this->bloxconfig['getRowTplN'])){
+            $tplN = $this->getRowTplN($row, $rowTpl, $iteration);            
         }
 
-        if (substr($rowTpl, 0, 7) == '@FIELD:') {
-            $rowTpl = ($row[substr($rowTpl, 7)]);
-        }
+        $rowTpl = $this->getRowTpl($row, $rowTpl, $iteration);
 
         $datarowTplData = array();
         $bloxinnerrows = array();
@@ -403,15 +383,7 @@ class blox {
 
         if (is_array($innerrows)) {
             foreach ($innerrows as $key => $innerrow) {
-                $innertpl = '';
-                if (isset($this->tpls[$key])) {
-                    $innertpl = $this->tpls[$key];
-                } else {
-                    $tplfile = $this->bloxconfig['tplpath'] . $key . "Tpl.html";
-                    if (file_exists($modx->getOption('core_path') . $tplfile)) {
-                        $innertpl = "@FILE " . $tplfile;
-                    }
-                }
+                $innertpl = $this->getTpl($key);
                 if (isset($this->templates[$innertpl]) || $innertpl !== '') {
                     $data = $this->renderdatarows($innerrow, $innertpl, $key, $row);
                     $datarowTplData['innerrows'][$key] = $data;
@@ -444,6 +416,14 @@ class blox {
         $tpl->placeholders = $row;
         $output = $tpl->Render();
 
+        if (!empty($tplN)) {
+            $tpl = new bloxChunkie($tplN, array('parseLazy' => $this->bloxconfig['parseLazy']));
+            $row['_tpl'] = $output;
+            $tpl->placeholders = $row;
+            $output = $tpl->Render();
+        }
+
+
         unset($tpl, $row);
 
         return $output;
@@ -456,7 +436,9 @@ class blox {
 
         global $modx;
 
-        $template = $this->getRowTpl($row, $rowTpl);
+        $template = $this->getRowTpl($row, $rowTpl, $iteration);
+        $parser = new bloxChunkie($rowTpl, array('parseLazy' => $this->bloxconfig['parseLazy']));
+        $template = $parser->template;
 
         $searches = array();
         $replaces = array();
@@ -564,26 +546,62 @@ class blox {
         return $tpl;
     }
 
-    function getRowTpl($row, $rowTpl) {
+    function getRowTpl($row, $rowTpl, $iteration) {
         global $modx;
 
-        $tplfilename1 = $this->bloxconfig['tplpath'] . $row['tpl'];
-        $tplfilename2 = $this->bloxconfig['tplpath'] . $row['tpl'] . 'Tpl.html';
-        if ($row['tpl'] !== '') {
-            if (file_exists($modx->getOption('core_path') . $tplfilename1)) {
-                $rowTpl = "@FILE " . $tplfilename1;
-            } elseif (file_exists($modx->getOption('core_path') . $tplfilename2)) {
-                $rowTpl = "@FILE " . $tplfilename2;
-            } else {
-                $rowTpl = $row['tpl'];
+        if (isset($row['tpl'])) {
+            $tplfilename1 = $this->bloxconfig['tplpath'] . $row['tpl'];
+            $tplfilename2 = $this->bloxconfig['tplpath'] . $row['tpl'] . 'Tpl.html';
+            if ($row['tpl'] !== '') {
+                if (file_exists($modx->getOption('core_path') . $tplfilename1)) {
+                    $rowTpl = "@FILE " . $tplfilename1;
+                } elseif (file_exists($modx->getOption('core_path') . $tplfilename2)) {
+                    $rowTpl = "@FILE " . $tplfilename2;
+                } else {
+                    $rowTpl = $row['tpl'];
+                }
+            }
+
+            if (substr($rowTpl, 0, 7) == '@FIELD:') {
+                $rowTpl = ($row[substr($rowTpl, 7)]);
+            }
+        }
+        return $rowTpl;
+    }
+
+    function getRowTplN($row, $rowTpl, $iteration) {
+        global $modx;
+        $tplN = '';
+        $iteration++;
+        if ($iteration > 1) {
+            $divisors = $this->getDivisors($iteration);
+            if (!empty($divisors)) {
+                foreach ($divisors as $divisor) {
+                    $tplnth = str_replace('@FILE ', '', $rowTpl);
+                    $tplnth = str_replace('.html', '_n' . $divisor . '.html', $tplnth);
+                    /*
+                    echo $tplnth;
+                    echo '<br />';
+                    */
+                    if (file_exists($modx->getOption('core_path') . $tplnth)) {
+                        $tplN = "@FILE " . $tplnth;
+                        break;
+                    }
+                }
             }
         }
 
-        if (substr($rowTpl, 0, 7) == '@FIELD:') {
-            $rowTpl = ($row[substr($rowTpl, 7)]);
+        return $tplN;
+    }
+
+    public function getDivisors($integer) {
+        $divisors = array();
+        for ($i = $integer; $i > 1; $i--) {
+            if (($integer % $i) === 0) {
+                $divisors[] = $i;
+            }
         }
-        $parser = new bloxChunkie($rowTpl, array('parseLazy' => $this->bloxconfig['parseLazy']));
-        return $parser->template;
+        return $divisors;
     }
 
 }

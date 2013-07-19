@@ -153,6 +153,7 @@ if (!isset($cached['output'])) {
     $bloxconfig['parseFast'] = $modx->getOption('parseFast', $scriptProperties, false); // create one big Template with fastParse - placehholders and parse all at once
     $bloxconfig['parseLazy'] = intval($modx->getOption('parseLazy', $scriptProperties, '0'));
     $bloxconfig['toPlaceholder'] = $modx->getOption('toPlaceholder', $scriptProperties, '');
+    $bloxconfig['getRowTplN'] = $modx->getOption('getRowTplN', $scriptProperties, '0');
 
     if ($bloxconfig['resourceclass'] == 'modResource') {
         if (!in_array('bloxhelpers', $includes)) {
