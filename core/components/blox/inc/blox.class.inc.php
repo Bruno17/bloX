@@ -3,7 +3,7 @@
 /**
  * bloX
  *
- * Copyright 2009-2012 by Bruno Perner <b.perner@gmx.de>
+ * Copyright 2009-2013 by Bruno Perner <b.perner@gmx.de>
  *
  * bloX is free software; you can redistribute it and/or modify it under the 
  * terms of the GNU General Public License as published by the Free Software 
@@ -151,22 +151,36 @@ class blox {
         if (is_array($joins)) {
             foreach ($joins as $join) {
                 $jalias = $modx->getOption('alias', $join, '');
+                $type = $modx->getOption('type', $join, 'left');
                 $joinclass = $modx->getOption('classname', $join, '');
                 $on = $modx->getOption('on', $join, null);
+                $selectfields = $modx->getOption('selectfields', $join, '');
                 if (!empty($jalias)) {
                     if (empty($joinclass) && $fkMeta = $modx->getFKDefinition($classname, $jalias)) {
                         $joinclass = $fkMeta['class'];
                     }
                     if (!empty($joinclass)) {
-                        $selectfields = $modx->getOption('selectfields', $join, '');
+                        
 
                         /*
                         if ($joinFkMeta = $modx->getFKDefinition($joinclass, 'Resource')){
                         $localkey = $joinFkMeta['local'];
                         }
                         */
-                        $c->leftjoin($joinclass, $jalias, $on);
+                        
                         $selectfields = !empty($selectfields) ? explode(',', $selectfields) : null;
+                        switch ($type) {
+                            case 'right':
+                                $c->rightjoin($joinclass, $jalias, $on);
+                                break;
+                            case 'inner':
+                                $c->innerjoin($joinclass, $jalias, $on);
+                                break; 
+                            case 'left':
+                            default:
+                                $c->leftjoin($joinclass, $jalias, $on);
+                                break;                                                               
+                        }
                         if ($forcounting) {
 
                         } else {

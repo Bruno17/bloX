@@ -451,6 +451,18 @@ function getISOkw($timestamp) {
 	return $weekID;
 }
 
+function get_dowdate_afterstart($timestamp,$dow){
+	$ts_day = xetadodb_strftime("%d", $timestamp);
+	$ts_month = xetadodb_strftime("%m", $timestamp);
+	$ts_year = xetadodb_strftime("%Y", $timestamp);
+    $ts_dow = ($w = xetadodb_date("w", $timestamp)) ? $w : 7;
+    $offset = 7 - $tsdow + $dow;
+    $offset = $offset > 7 ? $offset - 7 : $offset;
+    
+    $ts_bydow = xetadodb_mktime(0, 0, 0, $ts_month, $ts_day + $offset, $ts_year);
+    return $ts_bydow;
+}
+
 function get_ts_weekstart($timestamp) {
 	$ts_dow = ($w = xetadodb_date("w", $timestamp)) ? $w : 7;
 	$ts_day = xetadodb_strftime("%d", $timestamp);

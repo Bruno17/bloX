@@ -16,9 +16,10 @@ class Blox_modTable_Div {
     function getdatas() {
         global $modx;
 
-        //custom prefix  
+        //custom prefix 
         $prefix = isset($this->bloxconfig['prefix']) && !empty($this->bloxconfig['prefix']) ? $this->bloxconfig['prefix'] : null;
         //if you have an empty prefix use this property
+        
         if (isset($this->bloxconfig['use_custom_prefix']) && !empty($this->bloxconfig['use_custom_prefix'])) {
             $prefix = isset($this->bloxconfig['prefix']) ? $this->bloxconfig['prefix'] : '';
         }

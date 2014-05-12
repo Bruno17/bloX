@@ -22,7 +22,7 @@
  * @package blox
  * @subpackage snippet
  */
-$bloxconfig = $array;
+$bloxconfig = array();
 $bloxconfig['path'] = 'components/blox/';
 $bloxconfig['absolutepath'] = $modx->getOption('core_path') . $bloxconfig['path'];
 $bloxconfig['component'] = $modx->getOption('component', $scriptProperties, '');
