@@ -197,6 +197,7 @@ class blox {
     /////////////////////////////////////////////////
 
     function displayblox() {
+        
         $datas = $this->getdatas($this->date, $this->bloxconfig['includesfile']);
         if (isset($datas['bloxoutput'])) {
             //direct output
@@ -617,7 +618,7 @@ class blox {
         }
         return $divisors;
     }
-
+    
 }
 
 ?>

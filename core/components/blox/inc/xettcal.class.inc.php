@@ -6,10 +6,15 @@ class xettcal {
 	//
 	// Constructor class
 	//
-	function xettcal($xetID) {
-		$this->xetID = $xetID;
+	function xettcal(&$blox) {
+	    $this->blox = &$blox;
 		$this->events_grouped='0';
-		$this->xetconfig=array();
+		$this->xetconfig = $this->blox->bloxconfig;
+        
+        $includeclass = 'bloxhelpers';
+        $includefile = $includeclass . '.class.inc.php';
+        include_once ($includefile);
+        $this->helpers = new bloxhelpers($this->blox);        
 	}
 
 //////////////////////////////////////////////////
@@ -124,12 +129,14 @@ function getMonthDays($year, $month)
 ////////////////////////////////////////////////////////
 //Monatskalender anzeigen (monthTpl,weedaysTpl)
 ////////////////////////////////////////////////////////
-function makeMonthArray($xetconfig,$monthcal,$output_arr=array(),$events=array()) {
+function makeMonthArray($xetconfig,$monthcal,$output_arr=array(),$events=array(),$docid = 0) {
 	global $modx;
 	$weeks = $monthcal['weeks'];
 	$tmpmonth = $monthcal['month'];
 	$tmpyear = $monthcal['year'];
 	$monthtimestamp = xetadodb_mktime(0, 0, 0, $tmpmonth, 01, $tmpyear);
+    $docid = empty($docid) ? $modx->resource->get('id') : $docid;
+    
 	/*
 	if ($xetconfig['display'] == 'yearcal'){
 		$monthevents = $this->extractevents($events, $this->get_ts_monthstart($monthtimestamp), $this->get_ts_monthend($monthtimestamp));
@@ -137,9 +144,10 @@ function makeMonthArray($xetconfig,$monthcal,$output_arr=array(),$events=array()
 		$monthevents = $this->gettheevents($monthtimestamp);
 	}
 	*/
-	$weeks_arr=array();		
+	$weeks_arr=array();	
+    $weekdays = array();	
 	foreach ($weeks as $week) {
-		$weeks_arr[]= $this->makeWeekArray($xetconfig,$week, $weekdays, $events);
+		$weeks_arr[]= $this->makeWeekArray($xetconfig,$week, $weekdays, $events, $docid);
 	}
 	$month_arr=array();
 	$weekdays=array();
@@ -150,23 +158,23 @@ function makeMonthArray($xetconfig,$monthcal,$output_arr=array(),$events=array()
 $timestamp = xetadodb_mktime(0, 0, 0, xetadodb_date("m", $monthtimestamp)-1, '01', xetadodb_date("Y", $monthtimestamp));
 $link['month'] = xetadodb_date("m", $timestamp);
 $link['year'] = xetadodb_date("Y", $timestamp);
-$month_arr['link_prevmonth']=$this->blox->smartModxUrl($modx->documentObject["id"],NULL, $link);
+$month_arr['link_prevmonth']=$this->helpers->smartModxUrl($docid,NULL, $link);
 $timestamp = xetadodb_mktime(0, 0, 0, xetadodb_date("m", $monthtimestamp)+1, '01', xetadodb_date("Y", $monthtimestamp));
 $link['month'] = xetadodb_date("m", $timestamp);
 $link['year'] = xetadodb_date("Y", $timestamp);
-$month_arr['link_nextmonth']=$this->blox->smartModxUrl($modx->documentObject["id"],NULL, $link);
+$month_arr['link_nextmonth']=$this->helpers->smartModxUrl($docid,NULL, $link);
 $timestamp = xetadodb_mktime(0, 0, 0, xetadodb_date("m", $monthtimestamp), '01', xetadodb_date("Y", $monthtimestamp)-1);
 $link['month'] = xetadodb_date("m", $timestamp);
 $link['year'] = xetadodb_date("Y", $timestamp);
-$month_arr['link_prevyear']=$this->blox->smartModxUrl($modx->documentObject["id"],NULL, $link);
+$month_arr['link_prevyear']=$this->helpers->smartModxUrl($docid,NULL, $link);
 $timestamp = xetadodb_mktime(0, 0, 0, xetadodb_date("m", $monthtimestamp), '01', xetadodb_date("Y", $monthtimestamp)-1);
 $link['month'] = xetadodb_date("m", $timestamp);
 $link['year'] = xetadodb_date("Y", $timestamp);
-$month_arr['link_nextyear']=$this->blox->smartModxUrl($modx->documentObject["id"],NULL, $link);	
+$month_arr['link_nextyear']=$this->helpers->smartModxUrl($docid,NULL, $link);	
 $link=array();
 $removearray=array('tsday');
 $link['tsmonth'] = $monthtimestamp;
-$month_arr['link_tsmonth']=$this->blox->smartModxUrl($modx->documentObject["id"],NULL, $link,$removearray);		
+$month_arr['link_tsmonth']=$this->helpers->smartModxUrl($docid,NULL, $link,$removearray);		
 	
 	$month_arr['tsmonth'] = $monthtimestamp;
 	$month_arr['innerrows']['week'] = $weeks_arr;
@@ -180,8 +188,9 @@ $month_arr['link_tsmonth']=$this->blox->smartModxUrl($modx->documentObject["id"]
 //////////////////////////////////////////////////
 //Daten-Template generieren (weekdataTpl)
 /////////////////////////////////////////////////
-function makeWeekArray($xetconfig,$week = array (), $weekdays = array (), $events = array ())
+function makeWeekArray($xetconfig,$week = array (), $weekdays = array (), $events = array (), $docid = 0)
 {
+    
     $output = '';
     $date = $week['timestamp'];
     $dateday = xetadodb_strftime("%d", $date);
@@ -222,7 +231,7 @@ function makeWeekArray($xetconfig,$week = array (), $weekdays = array (), $event
                 $dayevents = $this->extractevents($events, $this->get_ts_daystart($daytimestamp), $this->get_ts_dayend($daytimestamp));
             }
         }
-        $days_arr[] = $this->makeDayArray($xetconfig,$dayevents, $daytimestamp);
+        $days_arr[] = $this->makeDayArray($xetconfig,$dayevents, $daytimestamp, null, $docid);
         //print_r($days_arr);
     }
     //$tpl = new mgChunkie($this->xettpl['weekdataTpl']);
@@ -238,22 +247,22 @@ function makeWeekArray($xetconfig,$week = array (), $weekdays = array (), $event
 //////////////////////////////////////////////////////
 //Daten-Template generieren (datarowTpl,dataouterTpl)
 //////////////////////////////////////////////////////
-function makeDayArray($xetconfig,$events, $date, $sortOrder='ASC') {
+function makeDayArray($xetconfig,$events, $date, $sortOrder='ASC', $docid=0) {
 	global $modx;
 	
-	if (is_array($events)) {
+    $data_array = array();
+    $rowscount = 0;
+    $dayeventscount = 0;
+    if (is_array($events)) {
 		
 		$timestampdaystart = $this->get_ts_daystart($date);
 		$timestampmonthstart = $this->get_ts_monthstart($date);
 		$timestampweekstart = $this->get_ts_weekstart($date);
 		$timestampyearstart = $this->get_ts_yearstart($date);
-		if ($this->xetconfig['counteventstarts'] == '1') {
+		if (isset($this->xetconfig['counteventstarts']) && $this->xetconfig['counteventstarts'] == '1') {
 			$this->counteventstarts($events);
 		}
-		$data_array=array();
 		$rowid = 0;
-		$rowscount = 0;
-		$dayeventscount = 0;
 		$weekeventscount = 0;
 		$montheventscount = 0;
 		$yeareventscount = 0;
@@ -261,7 +270,7 @@ function makeDayArray($xetconfig,$events, $date, $sortOrder='ASC') {
 		$theyearstart = $themonthstart = $theweekstart = $thedaystart = $sortOrder=='ASC'? -10000000000000:10000000000000;
 		$rowscount = count($events);
 		foreach ($events as $event) {
-			$ID = $event['ID'];
+			//$ID = isset($event['ID']) ? $event['ID'] : '';
 			/*
 			$rowTpl = $this->xettpl['datarowTpl'];
 			if (isset ($event['tpl'])) {
@@ -363,23 +372,23 @@ function makeDayArray($xetconfig,$events, $date, $sortOrder='ASC') {
 			$event['weekeventsid'] = $weekeventscount;
 			$event['montheventsid'] = $montheventscount;
 			$event['yeareventsid'] = $yeareventscount;
-			if ($xetconfig['countdayevents'] == '1') {
+			if (isset($xetconfig['countdayevents']) && $xetconfig['countdayevents'] == '1') {
 				$this->countdayevents($events, $event['Time']);
 				$event['dayeventscount'] = $this->eventscount['day'][$eventdaystart];
 			}
-			if ($xetconfig['countweekevents'] == '1') {
+			if (isset($xetconfig['countweekevents']) && $xetconfig['countweekevents'] == '1') {
 				$this->countweekevents($events, $event['Time']);
 				$event['weekeventscount'] = $this->eventscount['week'][$eventweekstart];
 			}
-			if ($xetconfig['countmonthevents'] == '1') {
+			if (isset($xetconfig['countmonthevents']) && $xetconfig['countmonthevents'] == '1') {
 				$this->countmonthevents($events, $event['Time']);
 				$event['montheventscount'] = $this->eventscount['month'][$eventmonthstart];
 			}
-			if ($xetconfig['countyearevents'] == '1') {
+			if (isset($xetconfig['countyearevents']) && $xetconfig['countyearevents'] == '1') {
 				$this->countyearevents($events, $event['Time']);
 				$event['yeareventscount'] = $this->eventscount['year'][$eventyearstart];
 			}
-			if ($xetconfig['counteventstarts'] == '1') {
+			if (isset($xetconfig['counteventstarts']) && $xetconfig['counteventstarts'] == '1') {
 				$event['daystartscount'] = $this->eventscount['daystarts'][$eventdaystart];
 				$event['weekstartscount'] = $this->eventscount['weekstarts'][$eventweekstart];
 				$event['monthstartscount'] = $this->eventscount['monthstarts'][$eventmonthstart];
@@ -398,7 +407,7 @@ function makeDayArray($xetconfig,$events, $date, $sortOrder='ASC') {
     $link = array ();
 	$removearray=array('tsmonth');
     $link['tsday'] = $date;
-    $day_array['link_tsday'] = $this->blox->smartModxUrl($modx->documentObject["id"], NULL, $link,$removearray);
+    $day_array['link_tsday'] = $this->helpers->smartModxUrl($docid, NULL, $link,$removearray);
 	$day_array['date'] = $date;
 	$day_array['daytimestamp'] = $date;
 	$day_array['tsday'] = $date;

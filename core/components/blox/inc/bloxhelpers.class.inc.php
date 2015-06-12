@@ -656,6 +656,26 @@ class bloxhelpers {
         $perms = explode(',', $perms);
         return in_array($permission, $perms);
     }
+    
+    function smartModxUrl($docid, $docalias, $array_values, $removearray = array())
+    {
+        global $modx;
+        $array_url = $_GET;
+        $urlstring = array();
+
+        unset($array_url["id"]);
+        unset($array_url["q"]);
+
+        $array_url = array_merge($array_url, $array_values);
+
+        foreach ($array_url as $name => $value) {
+            if (!is_null($value) && !in_array($name, $removearray)) {
+                $urlstring[] = $name . '=' . urlencode($value);
+            }
+        }
+
+        return $modx->makeUrl($docid, $docalias, join('&', $urlstring));
+    }        
 
     /**
      * Sort DB result

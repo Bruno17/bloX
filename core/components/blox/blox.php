@@ -191,8 +191,7 @@ if (!isset($cached['output'])) {
             case 'xettcal':
                 if (class_exists($includeclass)) {
                     // Initialize class
-                    $blox->xettcal = new xettcal($bloxconfig['id']);
-                    $blox->xettcal->blox = &$blox;
+                    $blox->xettcal = new xettcal($blox);
                 } else {
                     $output = $includeclass . ' class not found';
                     return $output;
