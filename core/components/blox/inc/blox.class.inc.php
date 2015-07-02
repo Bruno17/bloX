@@ -357,7 +357,7 @@ class blox {
         $output = '';
         $out = array();
         if (is_array($rows)) {
-            $iteration = 0;
+            $iteration = 1;
             $rowscount = count($rows);
 
             foreach ($rows as $row) {
