@@ -1,19 +1,25 @@
 <?php
 
-class Blox_modResource_Table {
+class Blox_modResource_Table
+{
+    public $blox;
+    public $bloxconfig;
+    public $totalCount;
 
     /**
      * Constructor
      *
-     * @access	public
-     * @param	array	initialization parameters
+     * @access    public
+     * @param bloX $blox
      */
-    public function __construct(&$blox) {
+    public function __construct(&$blox)
+    {
         $this->blox = &$blox;
         $this->bloxconfig = &$blox->bloxconfig;
     }
 
-    function getdatas() {
+    function getdatas()
+    {
         global $modx;
 
         if (class_exists('bloxhelpers')) {
@@ -42,14 +48,15 @@ class Blox_modResource_Table {
 
         $numRows = $modx->getPlaceholder($this->bloxconfig['totalVar']);
 
-        require_once ($this->bloxconfig['absolutepath'] . 'inc/Pagination.php');
+        require_once($this->bloxconfig['absolutepath'] . 'inc/Pagination.php');
         $p = new Pagination(array(
             'per_page' => $this->bloxconfig['limit'],
             'num_links' => $this->bloxconfig['numLinks'],
             'cur_page' => $this->bloxconfig['page'],
             'total_rows' => $numRows,
             'page_query_string' => $this->bloxconfig['pageVarKey'],
-            'use_page_numbers' => true));
+            'use_page_numbers' => true
+        ));
 
         $fieldnames = array();
         if (count($this->columnNames) > 0) {
@@ -72,5 +79,3 @@ class Blox_modResource_Table {
     }
 }
 
-
-?>

@@ -5,13 +5,13 @@
  *
  * Copyright 2009-2013 by Bruno Perner <b.perner@gmx.de>
  *
- * bloX is free software; you can redistribute it and/or modify it under the 
- * terms of the GNU General Public License as published by the Free Software 
- * Foundation; either version 2 of the License, or (at your option) any 
+ * bloX is free software; you can redistribute it and/or modify it under the
+ * terms of the GNU General Public License as published by the Free Software
+ * Foundation; either version 2 of the License, or (at your option) any
  * later version.
  *
- * bloX is distributed in the hope that it will be useful, but WITHOUT ANY 
- * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS 
+ * bloX is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
  * FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
  * details.
  *
@@ -22,14 +22,16 @@
  * @package blox
  * @subpackage classfile
  */
-class blox {
+class blox
+{
 
     // Declaring private variables
     var $bloxconfig;
     var $bloxtpl;
 
     // Class constructor
-    function blox($bloxconfig) {
+    function blox($bloxconfig)
+    {
         $this->bloxID = $bloxconfig['id'];
         $this->bloxconfig = $bloxconfig;
         $this->bloxconfig['prefilter'] = '';
@@ -50,7 +52,8 @@ class blox {
         $this->date = xetadodb_mktime(0, 0, 0, $this->bloxconfig['month'], $this->bloxconfig['day'], $this->bloxconfig['year']);
     }
 
-    function checktpls() {
+    function checktpls()
+    {
         // example: &tpls=`bloxouter:myouter||row:contentonly`
 
         $this->tpls['bloxouter'] = "@FILE " . $this->bloxconfig['tplpath'] . "bloxouterTpl.html"; // [ path | chunkname | text ]
@@ -63,7 +66,8 @@ class blox {
         }
     }
 
-    function prepareQuery($scriptProperties = array(), &$total = 0, $forcounting = false) {
+    function prepareQuery($scriptProperties = array(), &$total = 0, $forcounting = false)
+    {
         global $modx;
 
         $limit = $modx->getOption('limit', $scriptProperties, '0');
@@ -90,7 +94,6 @@ class blox {
         } else {
             $c->select($modx->getSelectColumns($classname, $classname, '', $selectfields));
         }
-
 
         if ($joins) {
             $this->prepareJoins($classname, $joins, $c, $forcounting);
@@ -125,11 +128,10 @@ class blox {
 
         $total = $modx->getCount($classname, $c);
 
-
         if (is_array($sortConfig)) {
             foreach ($sortConfig as $sort) {
                 $sortby = $sort['sortby'];
-                $sortdir = isset($sort['sortdir']) ? $sort['sortdir'] : 'ASC';
+                $sortdir = $sort['sortdir'] ?? 'ASC';
                 $c->sortby($sortby, $sortdir);
             }
         }
@@ -145,7 +147,8 @@ class blox {
         return $c;
     }
 
-    public function prepareJoins($classname, $joins, &$c, $forcounting = false) {
+    public function prepareJoins($classname, $joins, &$c, $forcounting = false)
+    {
         global $modx;
 
         if (is_array($joins)) {
@@ -153,21 +156,20 @@ class blox {
                 $jalias = $modx->getOption('alias', $join, '');
                 $type = $modx->getOption('type', $join, 'left');
                 $joinclass = $modx->getOption('classname', $join, '');
-                $on = $modx->getOption('on', $join, null);
+                $on = $modx->getOption('on', $join);
                 $selectfields = $modx->getOption('selectfields', $join, '');
                 if (!empty($jalias)) {
                     if (empty($joinclass) && $fkMeta = $modx->getFKDefinition($classname, $jalias)) {
                         $joinclass = $fkMeta['class'];
                     }
                     if (!empty($joinclass)) {
-                        
 
                         /*
                         if ($joinFkMeta = $modx->getFKDefinition($joinclass, 'Resource')){
                         $localkey = $joinFkMeta['local'];
                         }
                         */
-                        
+
                         $selectfields = !empty($selectfields) ? explode(',', $selectfields) : null;
                         switch ($type) {
                             case 'right':
@@ -175,11 +177,11 @@ class blox {
                                 break;
                             case 'inner':
                                 $c->innerjoin($joinclass, $jalias, $on);
-                                break; 
+                                break;
                             case 'left':
                             default:
                                 $c->leftjoin($joinclass, $jalias, $on);
-                                break;                                                               
+                                break;
                         }
                         if ($forcounting) {
 
@@ -196,8 +198,9 @@ class blox {
     //Display bloX
     /////////////////////////////////////////////////
 
-    function displayblox() {
-        
+    function displayblox()
+    {
+
         $datas = $this->getdatas($this->date, $this->bloxconfig['includesfile']);
         if (isset($datas['bloxoutput'])) {
             //direct output
@@ -218,7 +221,8 @@ class blox {
     //displaydatas (bloxouterTpl)
     /////////////////////////////////////////////////
 
-    function displaydatas($outerdata = array()) {
+    function displaydatas($outerdata = array())
+    {
         global $modx;
 
         // $outerdata['innerrows']['row']='innerrows.row';
@@ -229,7 +233,6 @@ class blox {
         if ($cache == '2') {
             return $outerdata['cacheoutput'];
         }
-
 
         $bloxouterTplData = array();
         $bloxinnerrows = array();
@@ -281,7 +284,8 @@ class blox {
     //displaydatas (bloxouterTpl)
     /////////////////////////////////////////////////
 
-    function displaydatasFast($outerdata = array()) {
+    function displaydatasFast($outerdata = array())
+    {
         global $modx;
 
         $start = microtime(true);
@@ -340,7 +344,6 @@ class blox {
             $this->cache->writeCache($cachename, $output);
         }
 
-
         $end = microtime(true);
         if ($this->bloxconfig['debug'] || $this->bloxconfig['debugTime']) {
             $this->bloxdebug['time'][] = 'Time to render all: ' . ($end - $start) . ' seconds';
@@ -351,7 +354,8 @@ class blox {
     //////////////////////////////////////////////////
     //renderdatarows
     /////////////////////////////////////////////////
-    function renderdatarows($rows, $tpl, $rowkey = '', $outerdata = array(), $outerpath = '', $fast = false) {
+    function renderdatarows($rows, $tpl, $rowkey = '', $outerdata = array(), $outerpath = '', $fast = false)
+    {
         //$this->renderdepth++;//Todo
 
         $output = '';
@@ -378,13 +382,14 @@ class blox {
     //////////////////////////////////////////////////
     //renderdatarow and custom-innerrows (bloxouterTpl)
     /////////////////////////////////////////////////
-    function renderdatarow($row, $rowTpl = 'default', $rowkey = '', $outerdata = array(), $rowscount = 0, $iteration = 0) {
+    function renderdatarow($row, $rowTpl = 'default', $rowkey = '', $outerdata = array(), $rowscount = 0, $iteration = 0)
+    {
         global $modx;
 
         $date = $this->date;
         $tplN = '';
-        if (!empty($this->bloxconfig['getRowTplN'])){
-            $tplN = $this->getRowTplN($row, $rowTpl, $iteration);            
+        if (!empty($this->bloxconfig['getRowTplN'])) {
+            $tplN = $this->getRowTplN($row, $rowTpl, $iteration);
         }
 
         $rowTpl = $this->getRowTpl($row, $rowTpl, $iteration);
@@ -394,7 +399,6 @@ class blox {
         $bloxinnercounts = array();
         $innerrows = $modx->getOption('innerrows', $row, '');
         unset($row['innerrows']);
-
 
         if (is_array($innerrows)) {
             foreach ($innerrows as $key => $innerrow) {
@@ -438,7 +442,6 @@ class blox {
             $output = $tpl->Render();
         }
 
-
         unset($tpl, $row);
 
         return $output;
@@ -447,7 +450,8 @@ class blox {
     //////////////////////////////////////////////////
     //renderdatarow and custom-innerrows (bloxouterTpl)
     /////////////////////////////////////////////////
-    function renderdatarowFast($row, $rowTpl = 'default', $rowkey = '', $outerdata = array(), $rowscount = 0, $iteration = 0, $keypath = '', $outerpath = '') {
+    function renderdatarowFast($row, $rowTpl = 'default', $rowkey = '', $outerdata = array(), $rowscount = 0, $iteration = 0, $keypath = '', $outerpath = '')
+    {
 
         global $modx;
 
@@ -499,7 +503,8 @@ class blox {
     //////////////////////////////////////////////////////
     //Daten-array holen
     //////////////////////////////////////////////////////
-    function getdatas($date, $file) {
+    function getdatas($date, $file)
+    {
         global $modx;
         $file = $modx->getOption('core_path') . $file;
         $classfile = str_replace('.php', '.class.php', $file);
@@ -512,7 +517,7 @@ class blox {
             }
             if (file_exists($classfile)) {
                 if (!class_exists($class)) {
-                    include ($classfile);
+                    include($classfile);
                 }
 
                 $gd = new $class($this);
@@ -523,8 +528,8 @@ class blox {
         return $bloxdatas;
     }
 
-
-    function replaceEmbeds($embeds, $template_in) {
+    function replaceEmbeds($embeds, $template_in)
+    {
         if (count($embeds) > 0) {
             foreach ($embeds as $key => $embed) {
                 if ($embed) {
@@ -546,7 +551,8 @@ class blox {
         return $template_in;
     }
 
-    function getTpl($key) {
+    function getTpl($key)
+    {
         global $modx;
 
         $tpl = '';
@@ -561,7 +567,8 @@ class blox {
         return $tpl;
     }
 
-    function getRowTpl($row, $rowTpl, $iteration) {
+    function getRowTpl($row, $rowTpl, $iteration)
+    {
         global $modx;
 
         if (isset($row['tpl'])) {
@@ -584,7 +591,8 @@ class blox {
         return $rowTpl;
     }
 
-    function getRowTplN($row, $rowTpl, $iteration) {
+    function getRowTplN($row, $rowTpl, $iteration)
+    {
         global $modx;
         $tplN = '';
         $iteration++;
@@ -609,7 +617,8 @@ class blox {
         return $tplN;
     }
 
-    public function getDivisors($integer) {
+    public function getDivisors($integer)
+    {
         $divisors = array();
         for ($i = $integer; $i > 1; $i--) {
             if (($integer % $i) === 0) {
@@ -618,7 +627,5 @@ class blox {
         }
         return $divisors;
     }
-    
-}
 
-?>
+}

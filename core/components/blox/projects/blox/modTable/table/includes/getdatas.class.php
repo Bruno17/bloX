@@ -1,29 +1,36 @@
 <?php
 
-class Blox_modTable_Table {
+class Blox_modTable_Table
+{
+    public $blox;
+    public $bloxconfig;
+    public $totalCount;
 
     /**
      * Constructor
      *
-     * @access	public
-     * @param	array	initialization parameters
+     * @access    public
+     * @param bloX $blox
      */
-    public function __construct(&$blox) {
+    public function __construct(&$blox)
+    {
         $this->blox = &$blox;
         $this->bloxconfig = &$blox->bloxconfig;
     }
 
-    function getdatas() {
+    function getdatas()
+    {
         global $modx;
 
-        //custom prefix  
+        //custom prefix
         $prefix = isset($this->bloxconfig['prefix']) && !empty($this->bloxconfig['prefix']) ? $this->bloxconfig['prefix'] : null;
         //if you have an empty prefix use this property
+
         if (isset($this->bloxconfig['use_custom_prefix']) && !empty($this->bloxconfig['use_custom_prefix'])) {
-            $prefix = isset($this->bloxconfig['prefix']) ? $this->bloxconfig['prefix'] : '';
+            $prefix = $this->bloxconfig['prefix'] ?? '';
         }
 
-        $modx->addPackage($this->bloxconfig['packagename'], $modx->getOption('core_path') . 'components/' . $this->bloxconfig['packagename'] . '/model/',$prefix);
+        $modx->addPackage($this->bloxconfig['packagename'], $modx->getOption('core_path') . 'components/' . $this->bloxconfig['packagename'] . '/model/', $prefix);
 
         $query = $this->blox->prepareQuery($this->bloxconfig, $this->totalCount);
         $collection = $modx->getCollection($this->bloxconfig['classname'], $query);
@@ -47,14 +54,15 @@ class Blox_modTable_Table {
         }
 
         $numRows = $this->totalCount;
-        require_once ($this->bloxconfig['absolutepath'] . 'inc/Pagination.php');
+        require_once($this->bloxconfig['absolutepath'] . 'inc/Pagination.php');
         $p = new Pagination(array(
             'per_page' => $this->bloxconfig['limit'],
             'num_links' => $this->bloxconfig['numLinks'],
             'cur_page' => $this->bloxconfig['page'],
             'total_rows' => $numRows,
             'page_query_string' => $this->bloxconfig['pageVarKey'],
-            'use_page_numbers' => true));
+            'use_page_numbers' => true
+        ));
 
         $fieldnames = array();
         if (count($this->columnNames) > 0) {
@@ -74,4 +82,3 @@ class Blox_modTable_Table {
     }
 }
 
-?>

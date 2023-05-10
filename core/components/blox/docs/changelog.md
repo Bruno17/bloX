@@ -5,4 +5,9 @@ Changelog
     - Initial public release as package for MODX Revolution
 
 - 1.1
-    - xxxxx
+
+- 1.2
+
+- 1.3
+
+    - Compatibility with PHP 8

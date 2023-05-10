@@ -1,10 +1,10 @@
 <?php
 
 /**
- * Name: migxfeChunkie
+ * Name: bloxChunkie
  * Original name: Chunkie
  * Version: 2.0
- * 
+ *
  * Author: Armand "bS" Pondman <apondman@zerobarrier.nl>
  * Date: Oct 8, 2006
  *
@@ -14,7 +14,8 @@
 
 if (!class_exists('bloxChunkie')) {
 
-    class bloxChunkie {
+    class bloxChunkie
+    {
 
         /**
          * The name of a MODX chunk (could be prefixed by @FILE, @INLINE or
@@ -59,13 +60,14 @@ if (!class_exists('bloxChunkie')) {
          * migxfeChunkie constructor
          *
          * @param string $template Name of MODX chunk
-         * @param string $basepath Basepath @FILE is prefixed with.
+         * @param array $options Chunk options
          */
-        public function bloxChunkie($template = '', $options = array()) {
+        public function bloxChunkie($template = '', $options = array())
+        {
             global $modx;
             $this->options = $options;
-            $basepath = $modx->getOption('basepath',$this->options,'');
-            $addCore = $modx->getOption('addCore',$this->options,true);
+            $basepath = $modx->getOption('basepath', $this->options, '');
+            $addCore = $modx->getOption('addCore', $this->options, true);
             $this->basepath = ($basepath == '' && $addCore) ? $modx->getOption('core_path') : $basepath;
             $this->template = $this->getTemplate($template);
             $this->depth = 0;
@@ -74,14 +76,14 @@ if (!class_exists('bloxChunkie')) {
 
         }
 
-
         /**
          * Set the basepath @FILE is prefixed with.
          *
          * @access public
          * @param string $basepath The basepath @FILE is prefixed with.
          */
-        public function setBasepath($basepath) {
+        public function setBasepath($basepath)
+        {
             $this->basepath = $basepath;
         }
 
@@ -93,7 +95,7 @@ if (!class_exists('bloxChunkie')) {
          * @access public
          * @param string $value The value(s) the placeholder array is filled
          * with. If $value contains an array, all elements of the array are
-         * filled into the placeholder array using key/value. If one array 
+         * filled into the placeholder array using key/value. If one array
          * element contains a subarray the function will be called recursive
          * prefixing $keypath with the key of the subarray itself.
          * @param string $key The key $value will get in the placeholder array
@@ -101,7 +103,8 @@ if (!class_exists('bloxChunkie')) {
          * @param string $keypath The string separated by dot sign $key will
          * be prefixed with
          */
-        public function createVars($value = '', $key = '', $keypath = '', $depth = 0) {
+        public function createVars($value = '', $key = '', $keypath = '', $depth = 0)
+        {
             $depth++;
 
             if ($depth > $this->maxdepth) {
@@ -129,15 +132,18 @@ if (!class_exists('bloxChunkie')) {
          * @param string $key The key for the placeholder added
          * @param string $value The value for the placeholder added
          */
-        public function addVar($key, $value) {
+        public function addVar($key, $value)
+        {
             $this->createVars($value, $key);
         }
 
-        public function setPlaceholder($key, $value) {
+        public function setPlaceholder($key, $value)
+        {
             $this->createVars($value, $key);
         }
 
-        public function getPlaceholders() {
+        public function getPlaceholders()
+        {
             return $this->placeholders;
         }
 
@@ -147,7 +153,8 @@ if (!class_exists('bloxChunkie')) {
          * @access public
          * @return string
          */
-        public function render($parseLazy = false) {
+        public function render($parseLazy = false)
+        {
             global $modx;
             $template = $this->template;
             foreach ($this->replaceonlyfields as $field) {
@@ -169,10 +176,10 @@ if (!class_exists('bloxChunkie')) {
 
         /**
          * Set some placeholders as not to be processed
-         * @param string $k
-         * @param mixed $v
+         * @param string|array $f
          */
-        public function setReplaceonlyfields($f = '') {
+        public function setReplaceonlyfields($f = '')
+        {
             if (!is_array($f)) {
                 $f = !empty($f) ? explode(',', $f) : array();
             }
@@ -190,7 +197,8 @@ if (!class_exists('bloxChunkie')) {
          * Chunknames starting with '@INLINE ' contain the template code itself.
          * @return string
          */
-        public function getTemplate($tpl) {
+        public function getTemplate($tpl)
+        {
             global $modx;
 
             $template = "";
@@ -242,7 +250,8 @@ if (!class_exists('bloxChunkie')) {
          * @access public
          * @param string $template The new template string for rendering.
          */
-        public function setTemplate($template) {
+        public function setTemplate($template)
+        {
             $this->template = $template;
         }
 
@@ -250,4 +259,3 @@ if (!class_exists('bloxChunkie')) {
 
 }
 
-?>

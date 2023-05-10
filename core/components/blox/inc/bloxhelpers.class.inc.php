@@ -1,13 +1,18 @@
 <?php
 
-class bloxhelpers {
+class bloxhelpers
+{
+    public $blox;
+    public $bloxconfig;
 
-    public function __construct(&$blox) {
+    public function __construct(&$blox)
+    {
         $this->blox = &$blox;
         $this->bloxconfig = &$blox->bloxconfig;
     }
 
-    function getSiteMap($config) {
+    function getSiteMap($config)
+    {
         global $modx;
 
         $config['parents'] = $modx->getOption('startid', $config, 0);
@@ -44,7 +49,8 @@ class bloxhelpers {
         return $output;
     }
 
-    function getSiteMapChilds($items, $config) {
+    function getSiteMapChilds($items, $config)
+    {
         /* $start = array (array ('id'=>0));
          * $map = getSiteMap($start);
          * print_r($map);
@@ -102,14 +108,14 @@ class bloxhelpers {
                 }
             }
 
-
             $pages[] = $page;
         }
 
         return $pages;
     }
 
-    function getParentIds($config, $parentids = array()) {
+    function getParentIds($config, $parentids = array())
+    {
         global $modx;
 
         if ($object = $modx->getObject($config['classname'], array('id' => $config['activeid']))) {
@@ -120,7 +126,8 @@ class bloxhelpers {
         return $parentids;
     }
 
-    function getChilds($config) {
+    function getChilds($config)
+    {
         global $modx;
 
         $c = $modx->newQuery($config['classname'], array('parent' => $config['startid']));
@@ -151,7 +158,8 @@ class bloxhelpers {
         return $config;
     }
 
-    function buildMenu($docs, $depth, $docInfo = array(), $parentIds = array(), $level = 0) {
+    function buildMenu($docs, $depth, $docInfo = array(), $parentIds = array(), $level = 0)
+    {
         global $modx;
         $level++;
 
@@ -184,7 +192,7 @@ class bloxhelpers {
                     $children = $modx->getChildIds($docId, 1, array('context' => $this->bloxconfig['context'], 'where' => $this->bloxconfig['where']));
                     if ($children) {
                         $childMenu = $this->buildMenu($children, $depth, $docInfo, $parentIds, $level);
-                        $levelDocs[$docId]['childcount'] = count($childMenu); 
+                        $levelDocs[$docId]['childcount'] = count($childMenu);
                         if (count($childMenu)) {
                             $levelDocs[$docId]['level' . ($level + 1)] = $childMenu;
                         }
@@ -196,7 +204,8 @@ class bloxhelpers {
         }
     }
 
-    function buildMenuTemplate($docs, $depth, $docInfo = array(), $level = 0) {
+    function buildMenuTemplate($docs, $depth, $docInfo = array(), $level = 0)
+    {
         global $modx;
 
         $level++;
@@ -240,49 +249,49 @@ class bloxhelpers {
         }
     }
 
-    function getResources($scriptProperties = null) {
+    function getResources($scriptProperties = null)
+    {
         global $modx;
-
 
         if (!$scriptProperties) {
             $scriptProperties = $this->bloxconfig;
         }
 
         // lot of code from getresources snippet
-        $includeContent = !empty($scriptProperties['includeContent']) ? true : false;
-        $includeTVs = !empty($scriptProperties['includeTVs']) ? true : false;
+        $includeContent = !empty($scriptProperties['includeContent']);
+        $includeTVs = !empty($scriptProperties['includeTVs']);
         $includeTVList = !empty($scriptProperties['includeTVList']) ? explode(',', $scriptProperties['includeTVList']) : array();
-        $processTVs = !empty($scriptProperties['processTVs']) ? true : false;
+        $processTVs = !empty($scriptProperties['processTVs']);
         $processTVList = !empty($scriptProperties['processTVList']) ? explode(',', $scriptProperties['processTVList']) : array();
-        $prepareTVs = !empty($scriptProperties['prepareTVs']) ? true : false;
+        $prepareTVs = !empty($scriptProperties['prepareTVs']);
         $prepareTVList = !empty($scriptProperties['prepareTVList']) ? explode(',', $scriptProperties['prepareTVList']) : array();
-        $tvPrefix = isset($scriptProperties['tvPrefix']) ? $scriptProperties['tvPrefix'] : 'tv.';
+        $tvPrefix = $scriptProperties['tvPrefix'] ?? 'tv.';
         $parents = (!empty($scriptProperties['parents']) || $scriptProperties['parents'] === '0') ? explode(',', $scriptProperties['parents']) : array($modx->resource->get('id'));
         array_walk($parents, 'trim');
         $parents = array_unique($parents);
-        $depth = isset($scriptProperties['depth']) ? (integer) $scriptProperties['depth'] : 10;
-        $resources = isset($scriptProperties['resources']) ? $scriptProperties['resources'] : '';
-        $context = isset($scriptProperties['context']) ? $scriptProperties['context'] : '';
+        $depth = isset($scriptProperties['depth']) ? (integer)$scriptProperties['depth'] : 10;
+        $resources = $scriptProperties['resources'] ?? '';
+        $context = $scriptProperties['context'] ?? '';
 
-        $tvFiltersOrDelimiter = isset($scriptProperties['tvFiltersOrDelimiter']) ? $scriptProperties['tvFiltersOrDelimiter'] : '||';
-        $tvFiltersAndDelimiter = isset($scriptProperties['tvFiltersAndDelimiter']) ? $scriptProperties['tvFiltersAndDelimiter'] : ',';
+        $tvFiltersOrDelimiter = $scriptProperties['tvFiltersOrDelimiter'] ?? '||';
+        $tvFiltersAndDelimiter = $scriptProperties['tvFiltersAndDelimiter'] ?? ',';
         $tvFilters = !empty($scriptProperties['tvFilters']) ? explode($tvFiltersOrDelimiter, $scriptProperties['tvFilters']) : array();
 
         $where = !empty($scriptProperties['where']) ? $modx->fromJSON($scriptProperties['where']) : array();
-        $showUnpublished = !empty($scriptProperties['showUnpublished']) ? true : false;
-        $showDeleted = !empty($scriptProperties['showDeleted']) ? true : false;
-        $showHidden = !empty($scriptProperties['showHidden']) ? true : false;
-        $hideContainers = !empty($scriptProperties['hideContainers']) ? true : false;
+        $showUnpublished = !empty($scriptProperties['showUnpublished']);
+        $showDeleted = !empty($scriptProperties['showDeleted']);
+        $showHidden = !empty($scriptProperties['showHidden']);
+        $hideContainers = !empty($scriptProperties['hideContainers']);
 
-        $sortby = isset($scriptProperties['sortby']) ? $scriptProperties['sortby'] : 'publishedon';
-        $sortbyTV = isset($scriptProperties['sortbyTV']) ? $scriptProperties['sortbyTV'] : '';
-        $sortbyTVType = isset($scriptProperties['sortbyTVType']) ? $scriptProperties['sortbyTVType'] : 'string';
-        $sortbyAlias = isset($scriptProperties['sortbyAlias']) ? $scriptProperties['sortbyAlias'] : 'modResource';
-        $sortbyEscaped = !empty($scriptProperties['sortbyEscaped']) ? true : false;
-        $sortdir = isset($scriptProperties['sortdir']) ? $scriptProperties['sortdir'] : 'DESC';
-        $sortdirTV = isset($scriptProperties['sortdirTV']) ? $scriptProperties['sortdirTV'] : 'DESC';
-        $limit = isset($scriptProperties['limit']) ? (integer) $scriptProperties['limit'] : 5;
-        $offset = isset($scriptProperties['offset']) ? (integer) $scriptProperties['offset'] : 0;
+        $sortby = $scriptProperties['sortby'] ?? 'publishedon';
+        $sortbyTV = $scriptProperties['sortbyTV'] ?? '';
+        $sortbyTVType = $scriptProperties['sortbyTVType'] ?? 'string';
+        $sortbyAlias = $scriptProperties['sortbyAlias'] ?? 'modResource';
+        $sortbyEscaped = !empty($scriptProperties['sortbyEscaped']);
+        $sortdir = $scriptProperties['sortdir'] ?? 'DESC';
+        $sortdirTV = $scriptProperties['sortdirTV'] ?? 'DESC';
+        $limit = isset($scriptProperties['limit']) ? (integer)$scriptProperties['limit'] : 5;
+        $offset = isset($scriptProperties['offset']) ? (integer)$scriptProperties['offset'] : 0;
         $totalVar = !empty($scriptProperties['totalVar']) ? $scriptProperties['totalVar'] : 'total';
 
         $fields = !empty($scriptProperties['selectfields']) ? explode(',', $scriptProperties['selectfields']) : array();
@@ -294,11 +303,11 @@ class bloxhelpers {
             } elseif ($dbCacheFlag == '1') {
                 $dbCacheFlag = true;
             } else {
-                $dbCacheFlag = (integer) $dbCacheFlag;
+                $dbCacheFlag = (integer)$dbCacheFlag;
             }
         }
 
-        $debug = !empty($scriptProperties['debug']) ? true : false;
+        $debug = !empty($scriptProperties['debug']);
 
         /* multiple context support */
         $contextArray = array();
@@ -322,14 +331,14 @@ class bloxhelpers {
         $pcQuery->select(array('id', 'context_key'));
         if ($pcQuery->prepare() && $pcQuery->stmt->execute()) {
             foreach ($pcQuery->stmt->fetchAll(PDO::FETCH_ASSOC) as $pcRow) {
-                $pcMap[(integer) $pcRow['id']] = $pcRow['context_key'];
+                $pcMap[(integer)$pcRow['id']] = $pcRow['context_key'];
             }
         }
 
         $children = array();
         $parentArray = array();
         foreach ($parents as $parent) {
-            $parent = (integer) $parent;
+            $parent = (integer)$parent;
             if ($parent === 0) {
                 $pchildren = array();
                 if ($contextSpecified) {
@@ -339,8 +348,9 @@ class bloxhelpers {
                         }
                         $options = $pCtx !== $modx->context->get('key') ? array('context' => $pCtx) : array();
                         $pcchildren = $modx->getChildIds($parent, $depth, $options);
-                        if (!empty($pcchildren))
+                        if (!empty($pcchildren)) {
                             $pchildren = array_merge($pchildren, $pcchildren);
+                        }
                     }
                 } else {
                     $cQuery = $modx->newQuery('modContext', array('key:!=' => 'mgr'));
@@ -349,16 +359,18 @@ class bloxhelpers {
                         foreach ($cQuery->stmt->fetchAll(PDO::FETCH_COLUMN) as $pCtx) {
                             $options = $pCtx !== $modx->context->get('key') ? array('context' => $pCtx) : array();
                             $pcchildren = $modx->getChildIds($parent, $depth, $options);
-                            if (!empty($pcchildren))
+                            if (!empty($pcchildren)) {
                                 $pchildren = array_merge($pchildren, $pcchildren);
+                            }
                         }
                     }
                 }
                 $parentArray[] = $parent;
             } else {
                 $pContext = array_key_exists($parent, $pcMap) ? $pcMap[$parent] : false;
-                if ($debug)
-                    $modx->log(modX::LOG_LEVEL_ERROR, "context for {$parent} is {$pContext}");
+                if ($debug) {
+                    $modx->log(xPDO::LOG_LEVEL_ERROR, "context for {$parent} is {$pContext}");
+                }
                 if ($pContext && $contextSpecified && !in_array($pContext, $contextArray, true)) {
                     $parent = next($parents);
                     continue;
@@ -367,8 +379,9 @@ class bloxhelpers {
                 $options = !empty($pContext) && $pContext !== $modx->context->get('key') ? array('context' => $pContext) : array();
                 $pchildren = $modx->getChildIds($parent, $depth, $options);
             }
-            if (!empty($pchildren))
+            if (!empty($pchildren)) {
                 $children = array_merge($children, $pchildren);
+            }
             $parent = next($parents);
         }
         $parents = array_merge($parentArray, $children);
@@ -408,7 +421,8 @@ class bloxhelpers {
                 '=<' => '=<',
                 '>>' => '>',
                 '>=' => '>=',
-                '=>' => '=>');
+                '=>' => '=>'
+            );
             foreach ($tvFilters as $tvFilter) {
                 $filterGroup = array();
                 $filters = explode($tvFiltersAndDelimiter, $tvFilter);
@@ -430,7 +444,7 @@ class bloxhelpers {
                         $tvName = $modx->quote($f[0]);
                         if (is_numeric($f[1]) && !in_array($sqlOperator, array('LIKE', 'NOT LIKE'))) {
                             $tvValue = $f[1];
-                            if ($f[1] == (integer) $f[1]) {
+                            if ($f[1] == (integer)$f[1]) {
                                 $tvValueField = "CAST({$tvValueField} AS SIGNED INTEGER)";
                                 $tvDefaultField = "CAST({$tvDefaultField} AS SIGNED INTEGER)";
                             } else {
@@ -442,12 +456,12 @@ class bloxhelpers {
                         }
                         if ($multiple) {
                             $filterGroup[] = "(EXISTS (SELECT 1 FROM {$tmplVarResourceTbl} tvr JOIN {$tmplVarTbl} tv ON {$tvValueField} {$sqlOperator} {$tvValue} AND tv.name = {$tvName} AND tv.id = tvr.tmplvarid WHERE tvr.contentid = modResource.id) " .
-                                    "OR EXISTS (SELECT 1 FROM {$tmplVarTbl} tv WHERE tv.name = {$tvName} AND {$tvDefaultField} {$sqlOperator} {$tvValue} AND tv.id NOT IN (SELECT tmplvarid FROM {$tmplVarResourceTbl} WHERE contentid = modResource.id)) " .
-                                    ")";
+                                "OR EXISTS (SELECT 1 FROM {$tmplVarTbl} tv WHERE tv.name = {$tvName} AND {$tvDefaultField} {$sqlOperator} {$tvValue} AND tv.id NOT IN (SELECT tmplvarid FROM {$tmplVarResourceTbl} WHERE contentid = modResource.id)) " .
+                                ")";
                         } else {
                             $filterGroup = "(EXISTS (SELECT 1 FROM {$tmplVarResourceTbl} tvr JOIN {$tmplVarTbl} tv ON {$tvValueField} {$sqlOperator} {$tvValue} AND tv.name = {$tvName} AND tv.id = tvr.tmplvarid WHERE tvr.contentid = modResource.id) " .
-                                    "OR EXISTS (SELECT 1 FROM {$tmplVarTbl} tv WHERE tv.name = {$tvName} AND {$tvDefaultField} {$sqlOperator} {$tvValue} AND tv.id NOT IN (SELECT tmplvarid FROM {$tmplVarResourceTbl} WHERE contentid = modResource.id)) " .
-                                    ")";
+                                "OR EXISTS (SELECT 1 FROM {$tmplVarTbl} tv WHERE tv.name = {$tvName} AND {$tvDefaultField} {$sqlOperator} {$tvValue} AND tv.id NOT IN (SELECT tmplvarid FROM {$tmplVarResourceTbl} WHERE contentid = modResource.id)) " .
+                                ")";
                         }
                     } elseif (count($f) == 1) {
                         $tvValue = $modx->quote($f[0]);
@@ -486,9 +500,10 @@ class bloxhelpers {
             $include = array();
             $exclude = array();
             foreach ($resources as $resource) {
-                $resource = (int) $resource;
-                if ($resource == 0)
+                $resource = (int)$resource;
+                if ($resource == 0) {
                     continue;
+                }
                 if ($resource < 0) {
                     $exclude[] = abs($resource);
                 } else {
@@ -563,29 +578,32 @@ class bloxhelpers {
                 $sorts = array($sortby => $sortdir);
             }
             if (is_array($sorts)) {
-                while (list($sort, $dir) = each($sorts)) {
-                    if ($sortbyEscaped)
+                foreach ($sorts as $sort => $dir) {
+                    if ($sortbyEscaped) {
                         $sort = $modx->escape($sort);
-                    if (!empty($sortbyAlias))
+                    }
+                    if (!empty($sortbyAlias)) {
                         $sort = $modx->escape($sortbyAlias) . ".{$sort}";
+                    }
                     $criteria->sortby($sort, $dir);
                 }
             }
         }
-        if (!empty($limit))
+        if (!empty($limit)) {
             $criteria->limit($limit, $offset);
+        }
 
         if (!empty($debug)) {
             $criteria->prepare();
-            $modx->log(modX::LOG_LEVEL_ERROR, $criteria->toSQL());
+            $modx->log(xPDO::LOG_LEVEL_ERROR, $criteria->toSQL());
         }
         //$criteria->prepare();echo $criteria->toSQL();
 
         $collection = $modx->getCollection('modResource', $criteria, $dbCacheFlag);
 
-        $idx = !empty($idx) && $idx !== '0' ? (integer) $idx : 1;
-        $first = empty($first) && $first !== '0' ? 1 : (integer) $first;
-        $last = empty($last) ? (count($collection) + $idx - 1) : (integer) $last;
+        $idx = !empty($idx) && $idx !== '0' ? (integer)$idx : 1;
+        $first = empty($first) && $first !== '0' ? 1 : (integer)$first;
+        $last = empty($last) ? (count($collection) + $idx - 1) : (integer)$last;
 
         // collect the data
         $rows = array();
@@ -600,10 +618,12 @@ class bloxhelpers {
                     $templateVars = $resource->getMany('TemplateVars');
                 }
                 /**
-                 *  *  *  *  *  * @var modTemplateVar $templateVar */
+                 *  *  *  *  *  * @var modTemplateVar $templateVar
+                 */
                 foreach ($templateVars as $templateVar) {
-                    if (!empty($includeTVList) && !in_array($templateVar->get('name'), $includeTVList))
+                    if (!empty($includeTVList) && !in_array($templateVar->get('name'), $includeTVList)) {
                         continue;
+                    }
                     if ($processTVs && (empty($processTVList) || in_array($templateVar->get('name'), $processTVList))) {
                         $tvs[$tvPrefix . $templateVar->get('name')] = $templateVar->renderOutput($resource->get('id'));
                     } else {
@@ -620,7 +640,8 @@ class bloxhelpers {
                 'idx' => $idx,
                 'first' => $first,
                 'last' => $last,
-                'odd' => $odd), $resource->toArray('', false, true), $tvs);
+                'odd' => $odd
+            ), $resource->toArray('', false, true), $tvs);
             $idx++;
         }
         return $rows;
@@ -629,7 +650,8 @@ class bloxhelpers {
     //////////////////////////////////////////////////////////////////////////
     //Member Check
     //////////////////////////////////////////////////////////////////////////
-    function isMemberOf($groups) {
+    function isMemberOf($groups)
+    {
         global $modx;
         if ($groups == 'all') {
             return true;
@@ -647,7 +669,8 @@ class bloxhelpers {
     //function to check for permission
     /////////////////////////////////////////////////////////////////////////////
 
-    function checkpermission($permission) {
+    function checkpermission($permission)
+    {
         $groupnames = $this->getwebusergroupnames();
         $perms = '';
         foreach ($groupnames as $groupname) {
@@ -656,7 +679,7 @@ class bloxhelpers {
         $perms = explode(',', $perms);
         return in_array($permission, $perms);
     }
-    
+
     function smartModxUrl($docid, $docalias, $array_values, $removearray = array())
     {
         global $modx;
@@ -675,12 +698,12 @@ class bloxhelpers {
         }
 
         return $modx->makeUrl($docid, $docalias, join('&', $urlstring));
-    }        
+    }
 
     /**
      * Sort DB result
      *
-     * @param array $data Result of sql query as associative array
+     * @param array $_data Result of sql query as associative array
      *
      * Rest of parameters are optional
      * [, string $name  [, mixed $name or $order  [, mixed $name or $mode]]]
@@ -708,8 +731,8 @@ class bloxhelpers {
      *
      * @return array $data - Sorted data
      */
-    function sortDbResult($_data) {
-
+    function sortDbResult($_data)
+    {
 
         $_argList = func_get_args();
         $_data = array_shift($_argList);
@@ -721,7 +744,7 @@ class bloxhelpers {
         $_cols = array();
         $_rules = array();
         for ($_i = 0; $_i < $_max; $_i += 3) {
-            $_name = (string) $_argList[$_i];
+            $_name = (string)$_argList[$_i];
             if (!in_array($_name, array_keys(current($_data)))) {
                 continue;
             }
@@ -744,11 +767,12 @@ class bloxhelpers {
                     }
                 }
             }
-            $_mode = $_mode != SORT_NUMERIC ? $_argList[($_i + 2)] != SORT_STRING ? SORT_REGULAR : SORT_STRING  : SORT_NUMERIC;
+            $_mode = $_mode != SORT_NUMERIC ? $_argList[($_i + 2)] != SORT_STRING ? SORT_REGULAR : SORT_STRING : SORT_NUMERIC;
             $_rules[] = array(
                 'name' => $_name,
                 'order' => $_order,
-                'mode' => $_mode);
+                'mode' => $_mode
+            );
         }
         foreach ($_data as $_k => $_row) {
             foreach ($_rules as $_rule) {
@@ -776,7 +800,8 @@ class bloxhelpers {
     // Clean the IDs of any dangerous characters
     // ---------------------------------------------------
 
-    function cleanIDs($IDs) {
+    function cleanIDs($IDs)
+    {
         //Define the pattern to search for
         $pattern = array(
             '`(,)+`', //Multiple commas
@@ -788,7 +813,8 @@ class bloxhelpers {
         $replace = array(
             ',',
             '',
-            '');
+            ''
+        );
 
         //Clean startID (all chars except commas and numbers are removed)
         $IDs = preg_replace($pattern, $replace, $IDs);

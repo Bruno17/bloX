@@ -1,19 +1,25 @@
 <?php
 
-class Blox_modResource_Wayfinder {
+class Blox_modResource_Wayfinder
+{
+    public $blox;
+    public $bloxconfig;
+    public $totalCount;
 
     /**
      * Constructor
      *
-     * @access	public
-     * @param	array	initialization parameters
+     * @access    public
+     * @param bloX $blox
      */
-    public function __construct(&$blox) {
+    public function __construct(&$blox)
+    {
         $this->blox = &$blox;
         $this->bloxconfig = &$blox->bloxconfig;
     }
 
-    function getdatas() {
+    function getdatas()
+    {
         global $modx;
 
         $scriptProperties = $this->bloxconfig;
@@ -39,8 +45,8 @@ class Blox_modResource_Wayfinder {
         $config['activeid'] = $modx->getOption('activeid', $scriptProperties, 0);
         $config['sortby'] = $modx->getOption('sortby', $scriptProperties, 'menuindex');
         $config['sortdir'] = $modx->getOption('sortdir', $scriptProperties, 'ASC');
-        $config['classname'] = $modx->getOption('classname', $scriptProperties, 'modResource'); 
-        $config['limit'] = '1000';        
+        $config['classname'] = $modx->getOption('classname', $scriptProperties, 'modResource');
+        $config['limit'] = '1000';
 
         $children = $helper->getSiteMap($config);
 
@@ -48,8 +54,9 @@ class Blox_modResource_Wayfinder {
         return $bloxdatas;
 
     }
-    
-    function buildmenue($children){
+
+    function buildmenue($children)
+    {
         global $modx;
         $output = '';
         foreach ($children as $child) {
@@ -59,11 +66,10 @@ class Blox_modResource_Wayfinder {
             if (is_array($child['innerrows']['children'])) {
                 $wrapper = $this->buildmenue($child['innerrows']['children']);
             }
-            $output .= '<li class= "' .$active.'"> <a href="'.$link.'">'.$child['pagetitle'].'</a> '.$wrapper.' </li>';
+            $output .= '<li class= "' . $active . '"> <a href="' . $link . '">' . $child['pagetitle'] . '</a> ' . $wrapper . ' </li>';
         }
-        return '<ul>' . $output . '</ul>';        
+        return '<ul>' . $output . '</ul>';
     }
-    
-}
 
+}
 
